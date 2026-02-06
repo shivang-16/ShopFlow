@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-wordpress
+  labels:
+    app: {{ .Release.Name }}-wordpress
+spec:
+  type: {{ .Values.wordpress.service.type }}
+  ports:
+    - port: {{ .Values.wordpress.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Release.Name }}-wordpress
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mariadb
+  labels:
+    app: {{ .Release.Name }}-mariadb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: mysql
+      protocol: TCP
+      name: mysql
+  selector:
+    app: {{ .Release.Name }}-mariadb

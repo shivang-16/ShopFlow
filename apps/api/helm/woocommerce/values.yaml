@@ -1,0 +1,27 @@
+wordpress:
+  image:
+    repository: wordpress
+    tag: 6.4-php8.1-apache
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  
+mariadb:
+  image:
+    repository: mariadb
+    tag: 10.6
+    pullPolicy: IfNotPresent
+  auth:
+    rootPassword: rootpassword
+    database: wordpress
+    username: wordpress
+    password: wordpresspassword
+  persistence:
+    enabled: true
+    size: 5Gi
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "store.local.test"

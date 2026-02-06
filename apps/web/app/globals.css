@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #18191a; /* Dark gray for drive dark mode */
+    --foreground: #e3e3e3;
+    --border: #444746;
+    --input: #444746;
+    --ring: #a8c7fa;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

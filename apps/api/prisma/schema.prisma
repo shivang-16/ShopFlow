@@ -1,0 +1,42 @@
+generator client {
+  provider   = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StoreType {
+  WOOCOMMERCE
+  MEDUSA
+}
+
+enum StoreStatus {
+  PROVISIONING
+  READY
+  FAILED
+}
+
+model Store {
+  id          String      @id @default(uuid())
+  name        String
+  subdomain   String      @unique
+  type        StoreType
+  status      StoreStatus @default(PROVISIONING)
+  userId      String
+  dbName      String?
+  dbUser      String?
+  dbPassword  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entityId  String
+  entity    String
+  userId    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
