@@ -1,6 +1,6 @@
 import http from "http";
 import app from "./app";
-import prisma from "./prisma";
+import prisma from "../prisma/prisma";
 import { logger } from "./logger";
 
 const PORT = 4001;

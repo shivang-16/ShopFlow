@@ -11,10 +11,10 @@ export function Navbar() {
         <Link href="/sign-in" className="flex items-center gap-2.5">
           <img 
             src="/cloudly_logo.png" 
-            alt="Cloudly" 
+            alt="ShoFlow" 
             className="w-13 h-9"
           />
-          <span className="text-xl font-medium text-[#5f6368]">Cloudly</span>
+          <span className="text-xl font-medium text-[#5f6368]">ShoFlow</span>
         </Link>
         
         {/* Action Buttons */}

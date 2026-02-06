@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Cloudly - Cloud Storage",
+  title: "ShoFlow - Cloud Storage",
   description: "AI-powered, secure cloud storage for seamless file sharing and enhanced collaboration.",
 };
 

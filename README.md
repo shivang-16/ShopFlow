@@ -1,6 +1,6 @@
-# Cloudly
+# ShoFlow
 
-Cloudly is a modern cloud storage solution allowing users to securely upload, manage, and share files upto 20GB completely for free. It features **direct client-to-S3 uploads using presigned URLs**, ensuring high performance and scalability. It is built as a monorepo using Turborepo, featuring a Next.js frontend and an Express.js/Node.js backend.
+ShoFlow is a modern cloud storage solution allowing users to securely upload, manage, and share files upto 20GB completely for free. It features **direct client-to-S3 uploads using presigned URLs**, ensuring high performance and scalability. It is built as a monorepo using Turborepo, featuring a Next.js frontend and an Express.js/Node.js backend.
 
 ## Structure
 
@@ -122,6 +122,6 @@ File uploads are handled efficiently using **AWS S3 Presigned URLs**. This allow
 
 Both the Web and API applications are deployed on Vercel:
 
-- **Web App**: [https://cloudly-web.vercel.app/](https://cloudly-web.vercel.app/)
-- **API Server**: [https://cloudly-api.vercel.app/](https://cloudly-api.vercel.app/)
+- **Web App**: [https://shopflow-web.vercel.app/](https://shopflow-web.vercel.app/)
+- **API Server**: [https://shopflow-api.vercel.app/](https://shopflow-api.vercel.app/)
 

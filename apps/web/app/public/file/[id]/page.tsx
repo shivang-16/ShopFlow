@@ -106,7 +106,7 @@ export default async function PublicFilePage({ params }: { params: Promise<{ id:
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 dark:bg-[#171717] border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            Shared via Cloudly Drive • Anyone with the link can view
+            Shared via ShoFlow Drive • Anyone with the link can view
           </p>
         </div>
       </div>

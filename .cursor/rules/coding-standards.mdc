@@ -1,0 +1,63 @@
+---
+description: Project coding standards and conventions
+alwaysApply: true
+---
+
+# Coding Standards
+
+## Import Organization
+
+Always place all imports at the top of the file. Never place imports in the middle of the file or inside functions.
+
+```typescript
+// ✅ GOOD
+import express from "express";
+import cors from "cors";
+import { Router } from "express";
+
+const app = express();
+
+// ❌ BAD
+const app = express();
+
+import cors from "cors"; // Don't import in the middle
+
+function myFunction() {
+  import { Router } from "express"; // Don't import inside functions
+}
+```
+
+## Comments
+
+Keep comments minimal. Write self-documenting code with clear variable and function names.
+
+```typescript
+// ✅ GOOD - Clear code, minimal comments
+export const createStore = async (req: Request, res: Response) => {
+  const { name, type = "WOOCOMMERCE" } = req.body;
+  
+  if (!name) {
+    return res.status(400).json({ error: "Store name is required" });
+  }
+  
+  // Business logic here
+};
+
+// ❌ BAD - Too many comments
+export const createStore = async (req: Request, res: Response) => {
+  // Get name from request body
+  const { name, type = "WOOCOMMERCE" } = req.body;
+  
+  // Check if name exists
+  if (!name) {
+    // Return error if no name
+    return res.status(400).json({ error: "Store name is required" });
+  }
+  
+  // Do the business logic
+};
+```
+
+## Documentation Files
+
+Do not create summary or documentation markdown files unless explicitly requested. Focus on writing clean, readable code instead.

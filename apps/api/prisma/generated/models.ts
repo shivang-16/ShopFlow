@@ -8,6 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Store.js'
-export type * from './models/AuditLog.js'
-export type * from './commonInputTypes.js'
+export type * from './models/Store'
+export type * from './models/AuditLog'
+export type * from './models/User'
+export type * from './commonInputTypes'

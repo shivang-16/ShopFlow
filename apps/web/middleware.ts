@@ -6,10 +6,7 @@ const isProtectedRoute = createRouteMatcher(['/drive(.*)']);
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   
-  // If user is signed in and on the public home page, redirect to /drive
-  if (userId && req.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/drive', req.url));
-  }
+ 
   
   // If user is not signed in and trying to access protected route, trigger auth
   if (isProtectedRoute(req)) {

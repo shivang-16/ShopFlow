@@ -31,7 +31,7 @@ class K8sService {
           metadata: {
             name: name,
             labels: {
-              "managed-by": "cloudly-provisioner",
+              "managed-by": "shopflow-provisioner",
             },
           },
         }

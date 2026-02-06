@@ -4,15 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
-  BarChart3, 
-  Package, 
-  Tag, 
-  Warehouse, 
-  ShoppingCart, 
-  TrendingUp, 
-  Users, 
-  Mail, 
-  Settings,
   Store
 } from "lucide-react";
 import { cn } from "../../../../lib/cn";
@@ -20,16 +11,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Store, label: "My Stores", href: "/stores" },
-  { icon: BarChart3, label: "Analytics", href: "/analytics" },
-  { icon: Package, label: "Products", href: "/products" },
-  { icon: Tag, label: "Offers", href: "/offers" },
-  { icon: Warehouse, label: "Inventory", href: "/inventory" },
-  { icon: ShoppingCart, label: "Orders", href: "/orders" },
-  { icon: TrendingUp, label: "Sales", href: "/sales" },
-  { icon: Users, label: "Customer", href: "/customers" },
-  { icon: Mail, label: "Newsletter", href: "/newsletter" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: Store, label: "My Store", href: "/stores" },
 ];
 
 export function Sidebar() {
@@ -43,7 +25,7 @@ export function Sidebar() {
             <Store className="text-white w-6 h-6" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold text-gray-800 leading-none">Cloudly</span>
+            <span className="text-xl font-bold text-gray-800 leading-none">ShoFlow</span>
             <span className="text-xs text-gray-400 font-medium">Provisioning</span>
           </div>
         </Link>

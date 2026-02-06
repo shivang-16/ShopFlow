@@ -14,8 +14,13 @@
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": []
   },
-  "include": ["src/**/*.ts", "prisma/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "prisma/**/*.ts", "src/types/**/*.d.ts"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "files": true
+  }
 }

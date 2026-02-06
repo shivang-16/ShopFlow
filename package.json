@@ -1,5 +1,5 @@
 {
-  "name": "cloudly",
+  "name": "ShopFlow",
   "private": true,
   "scripts": {
     "build": "turbo run build",

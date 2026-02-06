@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model Store
@@ -189,7 +189,7 @@ export type StoreGroupByOutputType = {
   subdomain: string
   type: $Enums.StoreType
   status: $Enums.StoreStatus
-  userId: string
+  userId: string | null
   dbName: string | null
   dbUser: string | null
   dbPassword: string | null
@@ -224,7 +224,7 @@ export type StoreWhereInput = {
   subdomain?: Prisma.StringFilter<"Store"> | string
   type?: Prisma.EnumStoreTypeFilter<"Store"> | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFilter<"Store"> | $Enums.StoreStatus
-  userId?: Prisma.StringFilter<"Store"> | string
+  userId?: Prisma.StringNullableFilter<"Store"> | string | null
   dbName?: Prisma.StringNullableFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
@@ -238,7 +238,7 @@ export type StoreOrderByWithRelationInput = {
   subdomain?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   dbName?: Prisma.SortOrderInput | Prisma.SortOrder
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -255,7 +255,7 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Store"> | string
   type?: Prisma.EnumStoreTypeFilter<"Store"> | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFilter<"Store"> | $Enums.StoreStatus
-  userId?: Prisma.StringFilter<"Store"> | string
+  userId?: Prisma.StringNullableFilter<"Store"> | string | null
   dbName?: Prisma.StringNullableFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
@@ -269,7 +269,7 @@ export type StoreOrderByWithAggregationInput = {
   subdomain?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   dbName?: Prisma.SortOrderInput | Prisma.SortOrder
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -289,7 +289,7 @@ export type StoreScalarWhereWithAggregatesInput = {
   subdomain?: Prisma.StringWithAggregatesFilter<"Store"> | string
   type?: Prisma.EnumStoreTypeWithAggregatesFilter<"Store"> | $Enums.StoreType
   status?: Prisma.EnumStoreStatusWithAggregatesFilter<"Store"> | $Enums.StoreStatus
-  userId?: Prisma.StringWithAggregatesFilter<"Store"> | string
+  userId?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbName?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
@@ -303,7 +303,7 @@ export type StoreCreateInput = {
   subdomain: string
   type: $Enums.StoreType
   status?: $Enums.StoreStatus
-  userId: string
+  userId?: string | null
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
@@ -317,7 +317,7 @@ export type StoreUncheckedCreateInput = {
   subdomain: string
   type: $Enums.StoreType
   status?: $Enums.StoreStatus
-  userId: string
+  userId?: string | null
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
@@ -331,7 +331,7 @@ export type StoreUpdateInput = {
   subdomain?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumStoreTypeFieldUpdateOperationsInput | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -345,7 +345,7 @@ export type StoreUncheckedUpdateInput = {
   subdomain?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumStoreTypeFieldUpdateOperationsInput | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -359,7 +359,7 @@ export type StoreCreateManyInput = {
   subdomain: string
   type: $Enums.StoreType
   status?: $Enums.StoreStatus
-  userId: string
+  userId?: string | null
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
@@ -373,7 +373,7 @@ export type StoreUpdateManyMutationInput = {
   subdomain?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumStoreTypeFieldUpdateOperationsInput | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -387,7 +387,7 @@ export type StoreUncheckedUpdateManyInput = {
   subdomain?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumStoreTypeFieldUpdateOperationsInput | $Enums.StoreType
   status?: Prisma.EnumStoreStatusFieldUpdateOperationsInput | $Enums.StoreStatus
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -526,7 +526,7 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     subdomain: string
     type: $Enums.StoreType
     status: $Enums.StoreStatus
-    userId: string
+    userId: string | null
     dbName: string | null
     dbUser: string | null
     dbPassword: string | null

@@ -1,21 +1,19 @@
 import { Request, Response } from "express";
-import prisma from "../prisma";
+import prisma from "../../prisma/prisma";
 import { k8sService } from "../services/k8s.service";
 import { logger } from "../logger";
 
 export const createStore = async (req: Request, res: Response) => {
   const { name, type = "WOOCOMMERCE" } = req.body;
-  const userId = "user_2sNq..."; // TODO: Get from Clerk auth context req.auth.userId
+  const userId = req.user?.id;
 
   if (!name) { 
       return res.status(400).json({ error: "Store name is required" }); 
   }
 
-  // Generate a subdomain safely
   const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + ".local.test";
 
   try {
-    // 1. Create DB Record
     const store = await prisma.store.create({
       data: {
         name,

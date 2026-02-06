@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { clerkMiddleware } from "@clerk/express";
 import { logger } from "./logger";
+import routes from "./routes";
 
 dotenv.config();
 
@@ -36,17 +37,15 @@ app.use(clerkMiddleware());
 app.get("/", (req: Request, res: Response) => {
   res.json({ 
     status: "ok",
-    message: "Cloudly API is running...",
+    message: "ShopFlow API is running...",
     version: "1.0.0"
   });
 });
 
-import { createStore, listStores, deleteStore } from "./controllers/store.controller";
+// Import routes
 
-// Store Routes
-app.post("/stores", createStore);
-app.get("/stores", listStores);
-app.delete("/stores/:id", deleteStore);
+// Use routes
+app.use("/api", routes);
 
 
 export default app;
