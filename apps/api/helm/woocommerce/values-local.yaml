@@ -23,22 +23,22 @@ wordpress:
   readinessProbe:
     enabled: true
     httpGet:
-      path: /wp-login.php
+      path: /wp-admin/install.php
       port: 80
-    initialDelaySeconds: 60
+    initialDelaySeconds: 90
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10
     successThreshold: 1
     failureThreshold: 6
   
   livenessProbe:
     enabled: true
     httpGet:
-      path: /wp-login.php
+      path: /wp-admin/install.php
       port: 80
-    initialDelaySeconds: 120
+    initialDelaySeconds: 180
     periodSeconds: 20
-    timeoutSeconds: 5
+    timeoutSeconds: 10
     failureThreshold: 6
 
 mariadb:
@@ -102,6 +102,9 @@ ingress:
   host: "store.local.test"
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
   tls:
     enabled: false
 

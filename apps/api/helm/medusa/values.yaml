@@ -1,57 +1,57 @@
-wordpress:
+medusa:
   image:
-    repository: wordpress
-    tag: 6.4-php8.1-apache
+    repository: medusajs/medusa
+    tag: latest
     pullPolicy: IfNotPresent
   
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
       memory: "512Mi"
-      cpu: "500m"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
   
   service:
     type: ClusterIP
-    port: 80
+    port: 9000
   
-  securityContext:
-    runAsNonRoot: false
-    fsGroup: 33
+  env:
+    NODE_ENV: "production"
+    ADMIN_CORS: "*"
+    STORE_CORS: "*"
   
   readinessProbe:
     enabled: true
     httpGet:
-      path: /wp-login.php
-      port: 80
-    initialDelaySeconds: 60
+      path: /health
+      port: 9000
+    initialDelaySeconds: 120
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10
     successThreshold: 1
     failureThreshold: 6
   
   livenessProbe:
     enabled: true
     httpGet:
-      path: /wp-login.php
-      port: 80
-    initialDelaySeconds: 120
+      path: /health
+      port: 9000
+    initialDelaySeconds: 180
     periodSeconds: 20
-    timeoutSeconds: 5
+    timeoutSeconds: 10
     failureThreshold: 6
 
-mariadb:
+postgresql:
   image:
-    repository: mariadb
-    tag: 10.6
+    repository: postgres
+    tag: 14-alpine
     pullPolicy: IfNotPresent
   
   auth:
-    rootPassword: rootpassword
-    database: wordpress
-    username: wordpress
-    password: wordpresspassword
+    database: medusa
+    username: medusa
+    password: medusapassword
   
   resources:
     requests:
@@ -75,9 +75,9 @@ mariadb:
     enabled: true
     exec:
       command:
-        - /bin/bash
+        - /bin/sh
         - -c
-        - mysqladmin ping -u$MARIADB_USER -p$MARIADB_PASSWORD
+        - pg_isready -U medusa
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
@@ -88,20 +88,60 @@ mariadb:
     enabled: true
     exec:
       command:
-        - /bin/bash
+        - /bin/sh
         - -c
-        - mysqladmin ping -u$MARIADB_USER -p$MARIADB_PASSWORD
+        - pg_isready -U medusa
     initialDelaySeconds: 60
     periodSeconds: 20
     timeoutSeconds: 5
     failureThreshold: 3
 
+redis:
+  image:
+    repository: redis
+    tag: 7-alpine
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  
+  readinessProbe:
+    enabled: true
+    exec:
+      command:
+        - redis-cli
+        - ping
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+  
+  livenessProbe:
+    enabled: true
+    exec:
+      command:
+        - redis-cli
+        - ping
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
 ingress:
   enabled: true
   className: "nginx"
-  host: "store.local.test"
+  host: "medusa.local.test"
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
   tls:
     enabled: false
 

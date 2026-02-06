@@ -14,22 +14,69 @@ spec:
       labels:
         app: {{ .Release.Name }}-mariadb
     spec:
+      {{- if .Values.mariadb.securityContext }}
+      securityContext:
+        runAsUser: {{ .Values.mariadb.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.mariadb.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.mariadb.securityContext.fsGroup }}
+      {{- end }}
       containers:
       - name: mariadb
         image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
         imagePullPolicy: {{ .Values.mariadb.image.pullPolicy }}
         env:
         - name: MARIADB_ROOT_PASSWORD
-          value: {{ .Values.mariadb.auth.rootPassword }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-root-password
         - name: MARIADB_USER
-          value: {{ .Values.mariadb.auth.username }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-user
         - name: MARIADB_PASSWORD
-          value: {{ .Values.mariadb.auth.password }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-password
         - name: MARIADB_DATABASE
-          value: {{ .Values.mariadb.auth.database }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-database
         ports:
         - containerPort: 3306
           name: mysql
+        {{- if .Values.mariadb.resources }}
+        resources:
+          {{- toYaml .Values.mariadb.resources | nindent 10 }}
+        {{- end }}
+        {{- if .Values.mariadb.readinessProbe.enabled }}
+        readinessProbe:
+          exec:
+            command:
+            {{- range .Values.mariadb.readinessProbe.exec.command }}
+            - {{ . }}
+            {{- end }}
+          initialDelaySeconds: {{ .Values.mariadb.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.mariadb.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.mariadb.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.mariadb.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.mariadb.readinessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.mariadb.livenessProbe.enabled }}
+        livenessProbe:
+          exec:
+            command:
+            {{- range .Values.mariadb.livenessProbe.exec.command }}
+            - {{ . }}
+            {{- end }}
+          initialDelaySeconds: {{ .Values.mariadb.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.mariadb.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.mariadb.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.mariadb.livenessProbe.failureThreshold }}
+        {{- end }}
         volumeMounts:
         - name: mariadb-data
           mountPath: /var/lib/mysql

@@ -14,6 +14,10 @@ spec:
       labels:
         app: {{ .Release.Name }}-wordpress
     spec:
+      {{- if .Values.wordpress.securityContext }}
+      securityContext:
+        fsGroup: {{ .Values.wordpress.securityContext.fsGroup }}
+      {{- end }}
       containers:
       - name: wordpress
         image: "{{ .Values.wordpress.image.repository }}:{{ .Values.wordpress.image.tag }}"
@@ -22,14 +26,48 @@ spec:
         - name: WORDPRESS_DB_HOST
           value: {{ .Release.Name }}-mariadb
         - name: WORDPRESS_DB_USER
-          value: {{ .Values.mariadb.auth.username }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-user
         - name: WORDPRESS_DB_PASSWORD
-          value: {{ .Values.mariadb.auth.password }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-password
         - name: WORDPRESS_DB_NAME
-          value: {{ .Values.mariadb.auth.database }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-database
         ports:
         - containerPort: 80
           name: http
+        {{- if .Values.wordpress.resources }}
+        resources:
+          {{- toYaml .Values.wordpress.resources | nindent 10 }}
+        {{- end }}
+        {{- if .Values.wordpress.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.wordpress.readinessProbe.httpGet.path }}
+            port: {{ .Values.wordpress.readinessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.wordpress.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.wordpress.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.wordpress.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.wordpress.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.wordpress.readinessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.wordpress.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.wordpress.livenessProbe.httpGet.path }}
+            port: {{ .Values.wordpress.livenessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.wordpress.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.wordpress.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.wordpress.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.wordpress.livenessProbe.failureThreshold }}
+        {{- end }}
         volumeMounts:
         - name: wordpress-data
           mountPath: /var/www/html

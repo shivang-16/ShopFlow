@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-medusa
+  labels:
+    app: {{ .Release.Name }}-medusa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-medusa
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-medusa
+    spec:
+      containers:
+      - name: medusa
+        image: "{{ .Values.medusa.image.repository }}:{{ .Values.medusa.image.tag }}"
+        imagePullPolicy: {{ .Values.medusa.image.pullPolicy }}
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: redis-url
+        - name: NODE_ENV
+          value: {{ .Values.medusa.env.NODE_ENV | quote }}
+        - name: ADMIN_CORS
+          value: {{ .Values.medusa.env.ADMIN_CORS | quote }}
+        - name: STORE_CORS
+          value: {{ .Values.medusa.env.STORE_CORS | quote }}
+        - name: JWT_SECRET
+          value: "some-jwt-secret-change-me"
+        - name: COOKIE_SECRET
+          value: "some-cookie-secret-change-me"
+        ports:
+        - containerPort: 80
+          name: http
+        {{- if .Values.medusa.resources }}
+        resources:
+          {{- toYaml .Values.medusa.resources | nindent 10 }}
+        {{- end }}
+        {{- if .Values.medusa.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.medusa.readinessProbe.httpGet.path }}
+            port: {{ .Values.medusa.readinessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.medusa.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.medusa.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.medusa.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.medusa.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.medusa.readinessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.medusa.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.medusa.livenessProbe.httpGet.path }}
+            port: {{ .Values.medusa.livenessProbe.httpGet.port }}
+          initialDelaySeconds: {{ .Values.medusa.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.medusa.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.medusa.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.medusa.livenessProbe.failureThreshold }}
+        {{- end }}

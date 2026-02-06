@@ -6,11 +6,11 @@ wordpress:
   
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
       memory: "512Mi"
-      cpu: "500m"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
   
   service:
     type: ClusterIP
@@ -48,23 +48,23 @@ mariadb:
     pullPolicy: IfNotPresent
   
   auth:
-    rootPassword: rootpassword
+    rootPassword: CHANGEME_ROOT_PASSWORD
     database: wordpress
     username: wordpress
-    password: wordpresspassword
+    password: CHANGEME_DB_PASSWORD
   
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
       memory: "512Mi"
-      cpu: "500m"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
   
   persistence:
     enabled: true
-    size: 5Gi
-    storageClass: "standard"
+    size: 10Gi
+    storageClass: "do-block-storage"
   
   securityContext:
     runAsUser: 999
@@ -99,20 +99,26 @@ mariadb:
 ingress:
   enabled: true
   className: "nginx"
-  host: "store.local.test"
+  host: "store.yourdomain.com"
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   tls:
-    enabled: false
+    enabled: true
+    secretName: "tls-store-cert"
 
 resourceQuota:
   enabled: true
   hard:
-    requests.cpu: "1"
-    requests.memory: "2Gi"
-    limits.cpu: "2"
-    limits.memory: "4Gi"
-    persistentvolumeclaims: "5"
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    limits.cpu: "4"
+    limits.memory: "8Gi"
+    persistentvolumeclaims: "10"
 
 networkPolicy:
   enabled: true
@@ -122,3 +128,4 @@ networkPolicy:
 
 secrets:
   createSecret: true
+  useExternalSecrets: false

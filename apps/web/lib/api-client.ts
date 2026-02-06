@@ -8,10 +8,17 @@ interface ApiRequestOptions extends Omit<RequestInit, 'headers'> {
   includeTeamId?: boolean;
 }
 
+export interface ApiResponse<T = any> {
+  data: T;
+  status: number;
+  ok: boolean;
+  error?: string;
+}
+
 export const apiRequest = async (
   endpoint: string, 
   options: ApiRequestOptions = {}
-): Promise<Response> => {
+): Promise<ApiResponse> => {
   const { token, teamId } = await getAuthWithTeam();
   
   const { includeTeamId = true, headers = {}, ...fetchOptions } = options;
@@ -33,10 +40,37 @@ export const apiRequest = async (
 
   const url = endpoint.startsWith('http') ? endpoint : `${_config.API_BASE_URL}${endpoint}`;
 
-  return fetch(url, {
-    ...fetchOptions,
-    headers: requestHeaders,
-  });
+  try {
+    const res = await fetch(url, {
+      ...fetchOptions,
+      headers: requestHeaders,
+    });
+
+    let data = null;
+    try {
+      const text = await res.text();
+      if (text) {
+        data = JSON.parse(text);
+      }
+    } catch (e) {
+      console.warn("Failed to parse API response JSON:", e);
+    }
+
+    return {
+      data,
+      status: res.status,
+      ok: res.ok,
+      error: !res.ok ? (data?.error || res.statusText) : undefined
+    };
+  } catch (err: any) {
+    console.error("API Request Failed:", err);
+    return {
+      data: null,
+      status: 0,
+      ok: false,
+      error: err.message || "Network error"
+    };
+  }
 };
 
 export const apiGet = async (endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}) => {
