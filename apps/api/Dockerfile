@@ -36,10 +36,10 @@ RUN npm install -g pnpm
 
 # Install Helm
 RUN apk add --no-cache curl openssl && \
-    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
-    chmod 700 get_helm.sh && \
-    ./get_helm.sh && \
-    rm get_helm.sh
+    curl -fsSL https://get.helm.sh/helm-v3.13.2-linux-amd64.tar.gz -o helm.tar.gz && \
+    tar -zxvf helm.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin/helm && \
+    rm -rf linux-amd64 helm.tar.gz
 
 WORKDIR /app
 
