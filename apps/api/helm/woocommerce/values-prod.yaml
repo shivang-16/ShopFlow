@@ -64,7 +64,7 @@ mariadb:
   persistence:
     enabled: true
     size: 10Gi
-    storageClass: "do-block-storage"
+    storageClass: "local-path"
   
   securityContext:
     runAsUser: 999
