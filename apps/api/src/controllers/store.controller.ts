@@ -46,7 +46,9 @@ export const createStore = async (req: Request, res: Response) => {
       where: { userId, status: { not: "FAILED" } },
     });
     const baseDomain = process.env.BASE_DOMAIN || "local.test";
+    const ingressPort = process.env.INGRESS_HTTP_PORT || "";
     const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${baseDomain}`;
+    const fullUrl = ingressPort ? `http://${subdomain}:${ingressPort}` : `http://${subdomain}`;
 
     const existingStore = await prisma.store.findUnique({
       where: { subdomain },
@@ -64,7 +66,7 @@ export const createStore = async (req: Request, res: Response) => {
     const store = await prisma.store.create({
       data: {
         name,
-        subdomain,
+        subdomain: fullUrl,
         type,
         status: "PROVISIONING",
         userId,
@@ -95,7 +97,7 @@ export const createStore = async (req: Request, res: Response) => {
           await k8sService.installWooCommerce(
             store.name,
             namespace,
-            subdomain,
+            name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${process.env.BASE_DOMAIN || "local.test"}`,
             dbPassword,
             dbRootPassword
           );
@@ -103,7 +105,7 @@ export const createStore = async (req: Request, res: Response) => {
           await k8sService.installMedusa(
             store.name,
             namespace,
-            subdomain,
+            name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${process.env.BASE_DOMAIN || "local.test"}`,
             dbPassword
           );
         } else {

@@ -155,7 +155,7 @@ resourceQuota:
     persistentvolumeclaims: "5"
 
 networkPolicy:
-  enabled: true
+  enabled: false
   policyTypes:
     - Ingress
     - Egress
