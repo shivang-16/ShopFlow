@@ -14,8 +14,9 @@ function validateStoreName(name: string): { valid: boolean; error?: string } {
   if (name.length > 50) {
     return { valid: false, error: "Store name must be less than 50 characters" };
   }
-  if (!/^[a-zA-Z0-9\s-]+$/.test(name)) {
-    return { valid: false, error: "Store name can only contain letters, numbers, spaces, and hyphens" };
+  // Must start with a letter and only contain lowercase letters, numbers, and hyphens
+  if (!/^[a-z][a-z0-9-]*$/.test(name)) {
+    return { valid: false, error: "Store name must start with a letter and can only contain lowercase letters, numbers, and hyphens" };
   }
   return { valid: true };
 }

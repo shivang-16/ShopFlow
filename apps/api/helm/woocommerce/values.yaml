@@ -64,7 +64,8 @@ mariadb:
   persistence:
     enabled: true
     size: 5Gi
-    storageClass: "standard"
+    # Use empty string to use default storage class (local-path on k3s)
+    storageClass: ""
   
   securityContext:
     runAsUser: 999
