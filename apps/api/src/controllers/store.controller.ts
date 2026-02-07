@@ -138,7 +138,6 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
-        // Get the NodePort assigned to the store
         const nodePort = await k8sService.getStoreNodePort(store.name, namespace);
         const publicIP = process.env.PUBLIC_IP || "localhost";
         const storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
@@ -147,7 +146,7 @@ export const createStore = async (req: Request, res: Response) => {
           where: { id: store.id },
           data: { 
             status: "READY",
-            subdomain: storeUrl // Update with the NodePort URL
+            subdomain: storeUrl 
           },
         });
 
