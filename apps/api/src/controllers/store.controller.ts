@@ -45,7 +45,8 @@ export const createStore = async (req: Request, res: Response) => {
     const userStoreCount = await prisma.store.count({
       where: { userId, status: { not: "FAILED" } },
     });
-    const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + ".local.test";
+    const baseDomain = process.env.BASE_DOMAIN || "local.test";
+    const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${baseDomain}`;
 
     const existingStore = await prisma.store.findUnique({
       where: { subdomain },
