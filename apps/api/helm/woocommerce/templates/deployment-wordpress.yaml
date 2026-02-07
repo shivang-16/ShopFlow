@@ -71,7 +71,18 @@ spec:
         volumeMounts:
         - name: wordpress-data
           mountPath: /var/www/html
+        - name: setup-script
+          mountPath: /usr/local/bin/setup-shop.sh
+          subPath: setup.sh
+      lifecycle:
+        postStart:
+          exec:
+            command: ["/bin/bash", "-c", "bash /usr/local/bin/setup-shop.sh >> /tmp/setup.log 2>&1 &"]
       volumes:
       - name: wordpress-data
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-wordpress-pvc
+      - name: setup-script
+        configMap:
+          name: {{ .Release.Name }}-setup-script
+          defaultMode: 0755
