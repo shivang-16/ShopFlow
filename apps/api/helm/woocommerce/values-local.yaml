@@ -13,7 +13,7 @@ wordpress:
       cpu: "300m"
   
   service:
-    type: ClusterIP
+    type: NodePort
     port: 80
   
   securityContext:
@@ -61,7 +61,7 @@ mariadb:
     enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   host: "store.local.test"
   annotations:

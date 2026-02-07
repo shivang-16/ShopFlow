@@ -190,6 +190,26 @@ class K8sService {
     }
   }
 
+  async getStoreNodePort(storeName: string, namespace: string): Promise<number | null> {
+    if (!this.k8sApi) {
+      return null;
+    }
+
+    try {
+      const serviceName = `${storeName}-wordpress`;
+      const serviceResponse = await this.k8sApi.readNamespacedService({ name: serviceName, namespace });
+      const service = serviceResponse;
+      
+      if (service.spec?.type === "NodePort" && service.spec.ports && service.spec.ports.length > 0) {
+        return service.spec.ports[0].nodePort || null;
+      }
+      return null;
+    } catch (err: any) {
+      logger.error(`Error getting NodePort for ${storeName}:`, err);
+      return null;
+    }
+  }
+
   async getPodLogs(namespace: string, podName: string, tailLines: number = 100): Promise<string> {
     if (!this.k8sApi) {
       return "K8s API not available";

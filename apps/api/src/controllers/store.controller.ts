@@ -138,9 +138,17 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
+        // Get the NodePort assigned to the store
+        const nodePort = await k8sService.getStoreNodePort(store.name, namespace);
+        const publicIP = process.env.BASE_DOMAIN?.split('.')[0] || "localhost";
+        const storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
+
         await prisma.store.update({
           where: { id: store.id },
-          data: { status: "READY" },
+          data: { 
+            status: "READY",
+            subdomain: storeUrl // Update with the NodePort URL
+          },
         });
 
         await auditService.log({
