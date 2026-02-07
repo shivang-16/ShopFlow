@@ -20,6 +20,7 @@ spec:
       labels:
         app: shopflow-api
     spec:
+      serviceAccountName: shopflow-api-sa
       containers:
       - name: api
         image: shopflow-api:latest

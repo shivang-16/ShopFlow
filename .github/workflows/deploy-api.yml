@@ -55,6 +55,10 @@ jobs:
         run: |
           kubectl create namespace shopflow --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Apply RBAC
+        run: |
+          kubectl apply -f k8s/rbac.yaml
+
       - name: Update secrets
         run: |
           kubectl delete secret api-secrets -n shopflow --ignore-not-found=true
