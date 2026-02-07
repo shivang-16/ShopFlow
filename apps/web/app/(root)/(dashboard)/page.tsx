@@ -67,7 +67,7 @@ export default function Home() {
 
     const interval = setInterval(() => {
       fetchStores(false);
-    }, 5000);
+    }, 50000);
 
     return () => clearInterval(interval);
   }, [stores]);

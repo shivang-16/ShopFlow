@@ -44,13 +44,6 @@ export const createStore = async (req: Request, res: Response) => {
     const userStoreCount = await prisma.store.count({
       where: { userId, status: { not: "FAILED" } },
     });
-
-    if (userStoreCount >= MAX_STORES_PER_USER) {
-      return res.status(429).json({
-        error: `Maximum store limit reached. You can create up to ${MAX_STORES_PER_USER} stores.`,
-      });
-    }
-
     const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + ".local.test";
 
     const existingStore = await prisma.store.findUnique({
