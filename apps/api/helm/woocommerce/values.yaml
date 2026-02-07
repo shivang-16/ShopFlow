@@ -65,7 +65,7 @@ mariadb:
     enabled: true
     size: 5Gi
     # Use empty string to use default storage class (local-path on k3s)
-    storageClass: ""
+    storageClass: "local-path"
   
   securityContext:
     runAsUser: 999
