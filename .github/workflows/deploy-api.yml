@@ -41,51 +41,57 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Create env file
+      - name: Build Docker image
         run: |
           cd apps/api
-          touch .env
-          echo "${{ secrets.PROD_ENV }}" > .env
+          docker build -f Dockerfile -t shopflow-api:${{ github.sha }} ../../
+          docker tag shopflow-api:${{ github.sha }} shopflow-api:latest
 
-      - name: Build Docker image locally
+      - name: Import image to k3s
         run: |
-          cd apps/api
-          docker build -f Dockerfile -t shopflow-api:latest ../../
+          docker save shopflow-api:${{ github.sha }} | sudo k3s ctr images import -
 
-      - name: Stop existing containers
+      - name: Create namespace
         run: |
-          cd apps/api
-          docker compose down || true
+          kubectl create namespace shopflow --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Start containers with production configuration
+      - name: Update secrets
         run: |
-          cd apps/api
-          docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+          kubectl delete secret api-secrets -n shopflow --ignore-not-found=true
+          kubectl create secret generic api-secrets \
+            --from-env-file=<(echo "${{ secrets.PROD_ENV }}") \
+            --namespace=shopflow
 
-      - name: Wait for service to be ready
+      - name: Update deployment manifest with image tag
         run: |
-          echo "Waiting for API to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:4001/health; do sleep 2; done'
+          sed -i "s|image: shopflow-api:latest|image: shopflow-api:${{ github.sha }}|g" k8s/api-deployment.yaml
+
+      - name: Deploy to k3s
+        run: |
+          kubectl apply -f k8s/api-deployment.yaml
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/shopflow-api -n shopflow --timeout=120s
+
+      - name: Get service info
+        run: |
+          kubectl get svc -n shopflow shopflow-api
+          echo "API accessible at: http://$(curl -s ifconfig.me):30001"
 
       - name: Health check
         run: |
-          echo "Running comprehensive health check..."
-          curl -f http://localhost:4001/health
-          curl -f http://localhost:4001/
+          sleep 10
+          curl -f http://localhost:30001/health || exit 1
 
-      - name: Clean up old images
-        run: docker image prune -f
-
-      - name: Notify deployment success
+      - name: Deployment success
         run: |
           echo "✅ Deployment successful!"
-          echo "🚀 API is running at http://localhost:4001"
-          echo "🏥 Health check: http://localhost:4001/health"
+          echo "🚀 API is running in k3s"
+          echo "🌐 Access at: http://$(curl -s ifconfig.me):30001"
 
       - name: Notify deployment failure
         if: failure()
         run: |
           echo "❌ Deployment failed!"
-          echo "📋 Container logs:"
-          cd apps/api
-          docker compose logs --tail=50
+          kubectl logs -n shopflow -l app=shopflow-api --tail=50
