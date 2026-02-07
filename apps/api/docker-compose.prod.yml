@@ -1,0 +1,23 @@
+services:
+  api:
+    # Production-specific configurations
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    # Read-only root filesystem (except for necessary paths)
+    read_only: false
+    tmpfs:
+      - /tmp

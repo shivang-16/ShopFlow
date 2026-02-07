@@ -1,0 +1,29 @@
+services:
+  api:
+    image: shopflow-api:latest
+    container_name: shopflow-api
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+    env_file:
+      - .env
+    volumes:
+      # Mount kubeconfig for Kubernetes access
+      - ~/.kube:/root/.kube:ro
+      # Mount Docker socket for potential future use
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - shopflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  shopflow-network:
+    driver: bridge

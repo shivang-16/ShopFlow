@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.*
+*.log
+.git
+.gitignore
+README.md
+.DS_Store
+coverage
+.vscode
+.idea
+helm/*/templates
+*.md
