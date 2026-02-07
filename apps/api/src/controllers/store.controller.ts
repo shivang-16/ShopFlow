@@ -140,7 +140,7 @@ export const createStore = async (req: Request, res: Response) => {
 
         // Get the NodePort assigned to the store
         const nodePort = await k8sService.getStoreNodePort(store.name, namespace);
-        const publicIP = process.env.BASE_DOMAIN?.split('.')[0] || "localhost";
+        const publicIP = process.env.PUBLIC_IP || "localhost";
         const storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
 
         await prisma.store.update({
