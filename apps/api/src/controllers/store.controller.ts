@@ -191,7 +191,7 @@ export const listStores = async (req: Request, res: Response) => {
 };
 
 export const getStore = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   try {
     const store = await prisma.store.findUnique({ where: { id } });
@@ -213,7 +213,7 @@ export const getStore = async (req: Request, res: Response) => {
 };
 
 export const getStoreStatus = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   try {
     const store = await prisma.store.findUnique({ where: { id } });
@@ -236,7 +236,7 @@ export const getStoreStatus = async (req: Request, res: Response) => {
 };
 
 export const getStoreLogs = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { podName } = req.query;
 
   try {
@@ -261,7 +261,7 @@ export const getStoreLogs = async (req: Request, res: Response) => {
 };
 
 export const getStoreAuditLogs = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   try {
     const store = await prisma.store.findUnique({ where: { id } });
@@ -278,7 +278,7 @@ export const getStoreAuditLogs = async (req: Request, res: Response) => {
 };
 
 export const deleteStore = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const userId = req.user?.id;
 
   if (!userId) {
