@@ -47,7 +47,9 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 
-# Copy helm charts (needed for store deployment)
+# Copy helm charts to where the code expects them (dist/helm)
+COPY --from=builder /app/apps/api/helm ./apps/api/dist/helm
+# Also copy to root just in case
 COPY --from=builder /app/apps/api/helm ./apps/api/helm
 
 # Install production dependencies only
