@@ -18,28 +18,12 @@ wordpress:
   
   securityContext:
     runAsNonRoot: false
-    fsGroup: 33
   
   readinessProbe:
-    enabled: true
-    httpGet:
-      path: /wp-admin/install.php
-      port: 80
-    initialDelaySeconds: 90
-    periodSeconds: 10
-    timeoutSeconds: 10
-    successThreshold: 1
-    failureThreshold: 6
+    enabled: false
   
   livenessProbe:
-    enabled: true
-    httpGet:
-      path: /wp-admin/install.php
-      port: 80
-    initialDelaySeconds: 180
-    periodSeconds: 20
-    timeoutSeconds: 10
-    failureThreshold: 6
+    enabled: false
 
 mariadb:
   image:
@@ -69,32 +53,12 @@ mariadb:
   securityContext:
     runAsUser: 999
     runAsGroup: 999
-    fsGroup: 999
   
   readinessProbe:
-    enabled: true
-    exec:
-      command:
-        - /bin/bash
-        - -c
-        - mysqladmin ping -u$MARIADB_USER -p$MARIADB_PASSWORD
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
+    enabled: false
   
   livenessProbe:
-    enabled: true
-    exec:
-      command:
-        - /bin/bash
-        - -c
-        - mysqladmin ping -u$MARIADB_USER -p$MARIADB_PASSWORD
-    initialDelaySeconds: 60
-    periodSeconds: 20
-    timeoutSeconds: 5
-    failureThreshold: 3
+    enabled: false
 
 ingress:
   enabled: true
@@ -109,7 +73,7 @@ ingress:
     enabled: false
 
 resourceQuota:
-  enabled: true
+  enabled: false
   hard:
     requests.cpu: "500m"
     requests.memory: "512Mi"
