@@ -17,6 +17,9 @@ spec:
         app: {{ .Release.Name }}-setup-job
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
       containers:
       - name: setup
         image: wordpress:cli-php8.1

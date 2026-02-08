@@ -41,11 +41,15 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build Docker image with cache
         run: |
           cd apps/api
-          docker build -f Dockerfile -t shopflow-api:${{ github.sha }} ../../
-          docker tag shopflow-api:${{ github.sha }} shopflow-api:latest
+          docker build \
+            --cache-from shopflow-api:latest \
+            -f Dockerfile \
+            -t shopflow-api:${{ github.sha }} \
+            -t shopflow-api:latest \
+            ../../
 
       - name: Import image to k3s
         run: |
