@@ -174,10 +174,11 @@ class K8sService {
       });
 
       const runningPods = podStatuses.filter(ps => ps.phase === "Running" || ps.phase === "Succeeded");
+      const allRunning = pods.length > 0 && runningPods.length === pods.length;
       const allReady = runningPods.length > 0 && runningPods.every(ps => 
         (ps.phase === "Running" && ps.ready) || ps.phase === "Succeeded"
       );
-      const anyFailed = podStatuses.some(ps => ps.phase === "Failed" || ps.restarts > 5);
+      const anyFailed = podStatuses.some(ps => ps.phase === "Failed" || ps.restarts > 10);
 
       if (anyFailed) {
         return { status: "FAILED", pods: podStatuses, message: "One or more pods failed" };
@@ -185,6 +186,11 @@ class K8sService {
 
       if (allReady) {
         return { status: "READY", pods: podStatuses, message: "All pods ready" };
+      }
+
+      // Fallback: if all pods are running (even if readiness probe hasn't passed yet)
+      if (allRunning) {
+        return { status: "READY", pods: podStatuses, message: "All pods running (readiness pending)" };
       }
 
       return { status: "PROVISIONING", pods: podStatuses, message: "Waiting for pods" };

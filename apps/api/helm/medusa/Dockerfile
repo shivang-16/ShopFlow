@@ -15,5 +15,5 @@ EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
   CMD curl -f http://localhost:9000/health || exit 1
 
-CMD ["sh", "-c", "npx medusa db:migrate && MEDUSA_ADMIN_CORS=* npx medusa develop --host 0.0.0.0"]
+CMD ["sh", "-c", "npx medusa db:migrate && DANGEROUSLY_DISABLE_HOST_CHECK=true MEDUSA_ADMIN_CORS=* npx medusa develop --host 0.0.0.0"]
 

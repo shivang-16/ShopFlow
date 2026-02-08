@@ -22,6 +22,13 @@ spec:
       - name: medusa-setup
         image: "{{ .Values.medusa.image.repository }}:{{ .Values.medusa.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.medusa.image.pullPolicy }}
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         workingDir: /app/medusa-store
         command: ["/bin/sh", "-c"]
         args:
