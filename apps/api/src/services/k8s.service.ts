@@ -220,11 +220,16 @@ class K8sService {
     }
 
     try {
-      // Try both possible service names
-      const serviceNames = [
-        `${storeName}-wordpress`,
-        `${storeName}-medusa`
-      ];
+      // Determine service names based on store type
+      const serviceNames = [];
+      if (storeType === "WOOCOMMERCE") {
+        serviceNames.push(`${storeName}-wordpress`);
+      } else if (storeType === "MEDUSA") {
+        serviceNames.push(`${storeName}-medusa`);
+      } else {
+        // Try both if type not specified
+        serviceNames.push(`${storeName}-wordpress`, `${storeName}-medusa`);
+      }
       
       for (const serviceName of serviceNames) {
         try {
@@ -232,7 +237,9 @@ class K8sService {
           const service = serviceResponse;
           
           if (service.spec?.type === "NodePort" && service.spec.ports && service.spec.ports.length > 0) {
-            return service.spec.ports[0].nodePort || null;
+            const nodePort = service.spec.ports[0].nodePort || null;
+            logger.info(`Found NodePort ${nodePort} for ${serviceName} in namespace ${namespace}`);
+            return nodePort;
           }
         } catch (err: any) {
           // Service not found, try next one
@@ -240,6 +247,7 @@ class K8sService {
         }
       }
       
+      logger.warn(`No NodePort service found for ${storeName} in namespace ${namespace}`);
       return null;
     } catch (err: any) {
       logger.error(`Error getting NodePort for ${storeName}:`, err);
@@ -492,10 +500,9 @@ class K8sService {
       --set mariadb.auth.rootPassword=${dbRootPass} \
       --set wordpress.adminPassword=${wpPass} \
       --set wordpress.storeTitle="${title}" \
-      --values "${chartPath}/values-local.yaml" \
-      --wait --timeout 10m`;
+      --values "${chartPath}/values-local.yaml"`;
 
-    logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}"...`);
+    logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (WooCommerce)... [NO WAIT - async deployment]`);
 
     try {
       const { stdout, stderr } = await execAsync(command);
@@ -552,9 +559,9 @@ class K8sService {
       command += ` \\\n      --set medusa.adminEmail="${adminEmail}"`;
     }
     
-    command += ` \\\n      --values "${chartPath}/${valuesFile}" \\\n      --wait --timeout 10m`;
+    command += ` \\\n      --values "${chartPath}/${valuesFile}"`;
 
-    logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (Medusa)...`);
+    logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (Medusa)... [NO WAIT - async deployment]`);
 
     try {
       const { stdout, stderr } = await execAsync(command);

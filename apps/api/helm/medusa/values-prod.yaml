@@ -68,7 +68,7 @@ resourceQuota:
   hard:
     requests.cpu: "800m"
     requests.memory: "1.5Gi"
-    limits.cpu: "1.5"
+    limits.cpu: "1.8"
     limits.memory: "3Gi"
     persistentvolumeclaims: "2"
 

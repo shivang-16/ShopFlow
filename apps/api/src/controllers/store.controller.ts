@@ -139,18 +139,23 @@ export const createStore = async (req: Request, res: Response) => {
         const maxAttempts = 60;
         let storeReady = false;
 
+        logger.info(`[${store.id}] Starting to monitor deployment status...`);
+
         while (attempts < maxAttempts && !storeReady) {
+          attempts++;
           const status = await k8sService.getStoreStatus(namespace);
+
+          logger.info(`[${store.id}] Attempt ${attempts}/${maxAttempts} - Status: ${status.status}, Message: ${status.message}`);
 
           if (status.status === "READY") {
             storeReady = true;
+            logger.info(`[${store.id}] Deployment is READY! Getting NodePort...`);
             break;
           } else if (status.status === "FAILED") {
             throw new Error(`Store provisioning failed: ${status.message}`);
           }
 
           await new Promise((resolve) => setTimeout(resolve, 5000));
-          attempts++;
 
           if (Date.now() - startTime > PROVISIONING_TIMEOUT) {
             throw new Error("Provisioning timeout exceeded");
@@ -161,14 +166,22 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
-        const nodePort = await k8sService.getStoreNodePort(sanitizedName, namespace);
+        logger.info(`[${store.id}] Fetching NodePort for ${sanitizedName} in namespace ${namespace}...`);
+        const nodePort = await k8sService.getStoreNodePort(sanitizedName, namespace, type);
+        logger.info(`[${store.id}] NodePort retrieved: ${nodePort}`);
+        
         const publicIP = process.env.PUBLIC_IP || "localhost";
-        const storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
+        
+        // For Medusa, add /app/login to the URL
+        let storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
+        if (type === "MEDUSA" && nodePort) {
+          storeUrl = `http://${publicIP}:${nodePort}/app/login`;
+        }
 
         // Update WordPress site URL to the actual NodePort URL
         if (nodePort && type === "WOOCOMMERCE") {
           try {
-            await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, storeUrl);
+            await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, `http://${publicIP}:${nodePort}`);
           } catch (urlUpdateError) {
             logger.warn(`Failed to auto-update WordPress URL, user will need to do it manually:`, urlUpdateError);
             // Don't fail the whole provisioning just because URL update failed
@@ -182,6 +195,8 @@ export const createStore = async (req: Request, res: Response) => {
             subdomain: storeUrl 
           },
         });
+
+        logger.info(`Store ${store.id} provisioned successfully - URL: ${storeUrl}`);
 
         await auditService.log({
           action: "STORE_PROVISIONED",
