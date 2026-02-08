@@ -71,7 +71,7 @@ postgresql:
   persistence:
     enabled: true
     size: 10Gi
-    storageClass: "gp3"
+    storageClass: "local-path"
   
   securityContext:
     runAsUser: 999
