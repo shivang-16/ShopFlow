@@ -54,29 +54,20 @@ spec:
             echo "Creating Publishable API Key programmatically..."
             
             # Create a temporary script to generate the API key
-            cat > /tmp/create-api-key.js << 'EOFSCRIPT'
-const { createPublishableApiKey } = require("@medusajs/medusa/dist/api/routes/admin/publishable-api-keys/create-publishable-api-key");
-
-async function createKey() {
+            cat > /tmp/create-api-key.js <<'EOFSCRIPT'
+const createKey = async () => {
   try {
     const container = require("@medusajs/medusa/dist/loaders/index").default;
     const app = await container({ directory: process.cwd() });
-    
     const publishableApiKeyService = app.resolve("publishableApiKeyService");
-    
-    const key = await publishableApiKeyService.create({
-      title: "Store Frontend Key",
-      created_by: "setup-job"
-    });
-    
+    const key = await publishableApiKeyService.create({ title: "Store Frontend Key", created_by: "setup-job" });
     console.log("API_KEY_CREATED:" + key.id);
     process.exit(0);
   } catch (error) {
     console.error("Failed to create API key:", error.message);
     process.exit(1);
   }
-}
-
+};
 createKey();
 EOFSCRIPT
             
@@ -89,96 +80,26 @@ EOFSCRIPT
               echo "Creating sample products programmatically..."
               
               # Create a script to add products
-              cat > /tmp/create-products.js << 'EOFPRODUCTS'
-async function createProducts() {
+              cat > /tmp/create-products.js <<'EOFPRODUCTS'
+const createProducts = async () => {
   try {
     const container = require("@medusajs/medusa/dist/loaders/index").default;
     const app = await container({ directory: process.cwd() });
-    
     const productService = app.resolve("productService");
     
-    // Create T-Shirt
-    await productService.create({
-      title: "Classic T-Shirt",
-      subtitle: "Comfortable cotton tee",
-      description: "A soft and comfortable cotton t-shirt perfect for everyday wear",
-      handle: "classic-tshirt",
-      status: "published",
-      options: [{ title: "Size" }],
-      variants: [
-        {
-          title: "Small",
-          prices: [{ currency_code: "usd", amount: 2999 }],
-          options: [{ value: "S" }],
-          manage_inventory: false,
-          inventory_quantity: 100
-        },
-        {
-          title: "Medium",
-          prices: [{ currency_code: "usd", amount: 2999 }],
-          options: [{ value: "M" }],
-          manage_inventory: false,
-          inventory_quantity: 100
-        },
-        {
-          title: "Large",
-          prices: [{ currency_code: "usd", amount: 2999 }],
-          options: [{ value: "L" }],
-          manage_inventory: false,
-          inventory_quantity: 100
-        }
-      ]
-    });
+    await productService.create({ title: "Classic T-Shirt", subtitle: "Comfortable cotton tee", description: "A soft and comfortable cotton t-shirt", handle: "classic-tshirt", status: "published", options: [{ title: "Size" }], variants: [{ title: "Small", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "S" }], manage_inventory: false, inventory_quantity: 100 }, { title: "Medium", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "M" }], manage_inventory: false, inventory_quantity: 100 }, { title: "Large", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "L" }], manage_inventory: false, inventory_quantity: 100 }] });
     
-    // Create Coffee Mug
-    await productService.create({
-      title: "Ceramic Coffee Mug",
-      subtitle: "Start your day right",
-      description: "Premium ceramic mug perfect for your morning coffee",
-      handle: "ceramic-mug",
-      status: "published",
-      variants: [{
-        title: "Default",
-        prices: [{ currency_code: "usd", amount: 1499 }],
-        manage_inventory: false,
-        inventory_quantity: 50
-      }]
-    });
+    await productService.create({ title: "Ceramic Coffee Mug", subtitle: "Start your day right", description: "Premium ceramic mug", handle: "ceramic-mug", status: "published", variants: [{ title: "Default", prices: [{ currency_code: "usd", amount: 1499 }], manage_inventory: false, inventory_quantity: 50 }] });
     
-    // Create Hoodie
-    await productService.create({
-      title: "Cozy Hoodie",
-      subtitle: "Stay warm and stylish",
-      description: "Super soft fleece hoodie with front pocket",
-      handle: "cozy-hoodie",
-      status: "published",
-      options: [{ title: "Size" }, { title: "Color" }],
-      variants: [
-        {
-          title: "Medium / Black",
-          prices: [{ currency_code: "usd", amount: 5999 }],
-          options: [{ value: "M" }, { value: "Black" }],
-          manage_inventory: false,
-          inventory_quantity: 30
-        },
-        {
-          title: "Large / Black",
-          prices: [{ currency_code: "usd", amount: 5999 }],
-          options: [{ value: "L" }, { value: "Black" }],
-          manage_inventory: false,
-          inventory_quantity: 30
-        }
-      ]
-    });
+    await productService.create({ title: "Cozy Hoodie", subtitle: "Stay warm", description: "Super soft fleece hoodie", handle: "cozy-hoodie", status: "published", options: [{ title: "Size" }, { title: "Color" }], variants: [{ title: "Medium / Black", prices: [{ currency_code: "usd", amount: 5999 }], options: [{ value: "M" }, { value: "Black" }], manage_inventory: false, inventory_quantity: 30 }, { title: "Large / Black", prices: [{ currency_code: "usd", amount: 5999 }], options: [{ value: "L" }, { value: "Black" }], manage_inventory: false, inventory_quantity: 30 }] });
     
     console.log("PRODUCTS_CREATED:3");
     process.exit(0);
   } catch (error) {
-    console.error("Failed to create products:", error.message);
+    console.error("Failed:", error.message);
     process.exit(1);
   }
-}
-
+};
 createProducts();
 EOFPRODUCTS
               

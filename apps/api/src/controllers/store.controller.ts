@@ -418,10 +418,23 @@ export const deleteStore = async (req: Request, res: Response) => {
 
     const namespace = `store-${store.id}`;
 
-    await k8sService.uninstallHelmRelease(store.name, namespace);
+    // Try to uninstall Helm release (ignore if not found)
+    try {
+      await k8sService.uninstallHelmRelease(store.name, namespace);
+    } catch (error: any) {
+      logger.warn(`Failed to uninstall Helm release ${store.name}:`, error.message);
+      // Continue anyway
+    }
 
-    await k8sService.deleteNamespace(namespace);
+    // Try to delete namespace (ignore if not found)
+    try {
+      await k8sService.deleteNamespace(namespace);
+    } catch (error: any) {
+      logger.warn(`Failed to delete namespace ${namespace}:`, error.message);
+      // Continue anyway
+    }
 
+    // Always delete from database regardless of K8s cleanup
     await prisma.store.delete({ where: { id } });
 
     await auditService.log({
