@@ -82,8 +82,14 @@ spec:
             echo "Creating WooCommerce pages..."
             wp wc tool run install_pages --user=1 --path=/var/www/html --allow-root || true
             
-            echo "Enabling Cash on Delivery..."
-            wp option patch update woocommerce_cod_settings enabled yes --path=/var/www/html --allow-root || true
+            echo "Enabling Cash on Delivery payment method..."
+            wp option update woocommerce_cod_settings '{"enabled":"yes","title":"Cash on Delivery","description":"Pay with cash upon delivery.","instructions":"Pay with cash when your order is delivered.","enable_for_methods":"","enable_for_virtual":"yes"}' --format=json --path=/var/www/html --allow-root
+            
+            echo "Configuring WooCommerce settings..."
+            wp option update woocommerce_currency 'USD' --path=/var/www/html --allow-root
+            wp option update woocommerce_calc_taxes 'no' --path=/var/www/html --allow-root
+            wp option update woocommerce_enable_guest_checkout 'yes' --path=/var/www/html --allow-root
+            wp option update woocommerce_enable_signup_and_login_from_checkout 'yes' --path=/var/www/html --allow-root
             
             echo "Creating sample products..."
             
