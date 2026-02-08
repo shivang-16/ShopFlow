@@ -4,6 +4,8 @@ wordpress:
     tag: 6.4-php8.1-apache
     pullPolicy: IfNotPresent
   
+  storeTitle: "My Store"
+  
   resources:
     requests:
       memory: "256Mi"

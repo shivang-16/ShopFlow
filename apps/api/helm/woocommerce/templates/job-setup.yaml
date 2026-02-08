@@ -65,7 +65,7 @@ spec:
               echo "Installing WordPress..."
               wp core install \
                 --url="{{ .Values.wordpress.siteUrl }}" \
-                --title="ShopFlow Store" \
+                --title="{{ .Values.wordpress.storeTitle }}" \
                 --admin_user="admin" \
                 --admin_password="{{ .Values.wordpress.adminPassword }}" \
                 --admin_email="admin@example.com" \

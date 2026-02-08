@@ -425,7 +425,8 @@ class K8sService {
     domain: string,
     dbPassword?: string,
     dbRootPassword?: string,
-    wpAdminPassword?: string
+    wpAdminPassword?: string,
+    storeTitle?: string
   ) {
     const chartPath = path.resolve(__dirname, "../../helm/woocommerce");
 
@@ -449,12 +450,15 @@ class K8sService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
+    const title = storeTitle || sanitizedReleaseName;
+    
     const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
       --set ingress.host=${domain} \
       --set mariadb.auth.password=${dbPass} \
       --set mariadb.auth.rootPassword=${dbRootPass} \
       --set wordpress.adminPassword=${wpPass} \
+      --set wordpress.storeTitle="${title}" \
       --values "${chartPath}/values-local.yaml" \
       --wait --timeout 10m`;
 

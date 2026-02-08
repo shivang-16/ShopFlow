@@ -118,7 +118,8 @@ export const createStore = async (req: Request, res: Response) => {
             sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
             dbPassword,
             dbRootPassword,
-            wpAdminPassword
+            wpAdminPassword,
+            name
           );
         } else if (type === "MEDUSA") {
           await k8sService.installMedusa(
