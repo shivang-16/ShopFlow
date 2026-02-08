@@ -77,8 +77,9 @@ export const createStore = async (req: Request, res: Response) => {
     const dbPassword = k8sService.generateSecurePassword(20);
     const dbRootPassword = k8sService.generateSecurePassword(20);
     const wpAdminPassword = k8sService.generateSecurePassword(16);
-    const dbUser = "wordpress";
-    const dbName = "wordpress";
+    const dbUser = type === "WOOCOMMERCE" ? "wordpress" : "medusa";
+    const dbName = type === "WOOCOMMERCE" ? "wordpress" : "medusa";
+    const adminEmail = type === "MEDUSA" ? "admin@medusa.local" : "admin";
 
     const store = await prisma.store.create({
       data: {
@@ -126,8 +127,9 @@ export const createStore = async (req: Request, res: Response) => {
             sanitizedName,
             namespace,
             sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
-            undefined,
-            undefined
+            dbPassword,
+            wpAdminPassword,
+            adminEmail
           );
         } else {
           throw new Error(`Unsupported store type: ${type}`);

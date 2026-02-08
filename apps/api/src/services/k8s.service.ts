@@ -492,8 +492,9 @@ class K8sService {
     releaseName: string,
     namespace: string,
     domain: string,
-    databaseUrl?: string,
-    redisUrl?: string
+    dbPassword?: string,
+    adminPassword?: string,
+    adminEmail?: string
   ) {
     const chartPath = path.resolve(__dirname, "../../helm/medusa");
 
@@ -505,9 +506,6 @@ class K8sService {
     if (existingRelease) {
       logger.info(`Helm release ${releaseName} already exists, upgrading`);
     }
-
-    const dbUrl = databaseUrl || "";
-    const rUrl = redisUrl || "";
 
     const sanitizedReleaseName = releaseName
       .toLowerCase()
@@ -522,12 +520,16 @@ class K8sService {
       --namespace ${namespace} \
       --set ingress.host=${domain}`;
     
-    if (dbUrl) {
-      command += ` \\\n      --set medusa.env.DATABASE_URL="${dbUrl}"`;
+    if (dbPassword) {
+      command += ` \\\n      --set postgresql.auth.password="${dbPassword}"`;
     }
     
-    if (rUrl) {
-      command += ` \\\n      --set medusa.env.REDIS_URL="${rUrl}"`;
+    if (adminPassword) {
+      command += ` \\\n      --set medusa.adminPassword="${adminPassword}"`;
+    }
+    
+    if (adminEmail) {
+      command += ` \\\n      --set medusa.adminEmail="${adminEmail}"`;
     }
     
     command += ` \\\n      --values "${chartPath}/${valuesFile}" \\\n      --wait --timeout 10m`;

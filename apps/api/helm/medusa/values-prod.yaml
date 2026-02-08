@@ -4,6 +4,9 @@ medusa:
     tag: latest
     pullPolicy: Always
   
+  adminEmail: "admin@medusa.local"
+  adminPassword: "changeme"
+  
   resources:
     requests:
       memory: "768Mi"
@@ -25,10 +28,25 @@ medusa:
     REDIS_URL: ""
   
   readinessProbe:
-    enabled: false
+    enabled: true
+    httpGet:
+      path: /health
+      port: 9000
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
   
   livenessProbe:
-    enabled: false
+    enabled: true
+    httpGet:
+      path: /health
+      port: 9000
+    initialDelaySeconds: 120
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
 
 ingress:
   enabled: false

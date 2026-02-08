@@ -1,219 +1,171 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-setup
+  name: {{ include "medusa.fullname" . }}-setup
   labels:
-    app: {{ .Release.Name }}-medusa
+    {{- include "medusa.labels" . | nindent 4 }}
+    app.kubernetes.io/component: setup
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook": post-install
     "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  ttlSecondsAfterFinished: 300
   backoffLimit: 3
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-setup-job
+        {{- include "medusa.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: setup
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
       containers:
-      - name: setup
-        image: node:18-alpine
-        command: ["/bin/sh"]
+      - name: medusa-setup
+        image: "{{ .Values.medusa.image.repository }}:{{ .Values.medusa.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.medusa.image.pullPolicy }}
+        workingDir: /app/medusa-store
+        command: ["/bin/sh", "-c"]
         args:
-          - -c
           - |
             set -e
-            
-            echo "Installing dependencies..."
-            apk add --no-cache curl postgresql-client
-            
-            echo "Waiting for Medusa server to be ready..."
-            sleep 60
-            
-            RETRIES=0
-            MAX_RETRIES=30
-            until curl -sf http://{{ .Release.Name }}-medusa:9000/health > /dev/null 2>&1 || [ $RETRIES -eq $MAX_RETRIES ]; do
-              echo "Waiting for Medusa server... (attempt $RETRIES/$MAX_RETRIES)"
-              sleep 10
-              RETRIES=$((RETRIES+1))
+            echo "Waiting for Medusa API to be ready..."
+            for i in $(seq 1 60); do
+              if curl -sf http://{{ include "medusa.fullname" . }}:9000/health > /dev/null 2>&1; then
+                echo "API is ready!"
+                break
+              fi
+              echo "Waiting... ($i/60)"
+              sleep 5
             done
             
-            if [ $RETRIES -eq $MAX_RETRIES ]; then
-              echo "ERROR: Medusa server did not become ready in time"
-              exit 1
+            echo "Creating admin user via Medusa CLI..."
+            npx medusa user -e {{ .Values.medusa.adminEmail }} -p {{ .Values.medusa.adminPassword }} || echo "User might already exist"
+            
+            echo "Seeding database with sample data..."
+            npx medusa seed -f ./data/seed.json || echo "Seed might have already run"
+            
+            echo "Creating additional sample products via API..."
+            sleep 10
+            
+            # Try to login and get token
+            TOKEN=$(curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/auth \
+              -H "Content-Type: application/json" \
+              -d '{"email":"{{ .Values.medusa.adminEmail }}","password":"{{ .Values.medusa.adminPassword }}"}' \
+              2>/dev/null | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+            
+            if [ -n "$TOKEN" ]; then
+              echo "Successfully authenticated! Token obtained."
+              echo "Creating additional products..."
+              
+              # Create T-Shirt
+              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $TOKEN" \
+                -d '{
+                  "title": "Classic T-Shirt",
+                  "subtitle": "Comfortable cotton tee",
+                  "description": "A soft and comfortable cotton t-shirt perfect for everyday wear",
+                  "handle": "classic-tshirt",
+                  "status": "published",
+                  "options": [{"title": "Size"}],
+                  "variants": [
+                    {
+                      "title": "Small",
+                      "prices": [{"currency_code": "usd", "amount": 2999}],
+                      "options": [{"value": "S"}],
+                      "manage_inventory": false,
+                      "inventory_quantity": 100
+                    },
+                    {
+                      "title": "Medium", 
+                      "prices": [{"currency_code": "usd", "amount": 2999}],
+                      "options": [{"value": "M"}],
+                      "manage_inventory": false,
+                      "inventory_quantity": 100
+                    },
+                    {
+                      "title": "Large",
+                      "prices": [{"currency_code": "usd", "amount": 2999}],
+                      "options": [{"value": "L"}],
+                      "manage_inventory": false,
+                      "inventory_quantity": 100
+                    }
+                  ]
+                }' || echo "Product creation failed"
+              
+              # Create Coffee Mug
+              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $TOKEN" \
+                -d '{
+                  "title": "Ceramic Coffee Mug",
+                  "subtitle": "Start your day right",
+                  "description": "Premium ceramic mug perfect for your morning coffee",
+                  "handle": "ceramic-mug",
+                  "status": "published",
+                  "variants": [{
+                    "title": "Default",
+                    "prices": [{"currency_code": "usd", "amount": 1499}],
+                    "manage_inventory": false,
+                    "inventory_quantity": 50
+                  }]
+                }' || echo "Product creation failed"
+              
+              # Create Hoodie
+              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $TOKEN" \
+                -d '{
+                  "title": "Cozy Hoodie",
+                  "subtitle": "Stay warm and stylish",
+                  "description": "Super soft fleece hoodie with front pocket",
+                  "handle": "cozy-hoodie",
+                  "status": "published",
+                  "options": [{"title": "Size"}, {"title": "Color"}],
+                  "variants": [
+                    {
+                      "title": "Medium / Black",
+                      "prices": [{"currency_code": "usd", "amount": 5999}],
+                      "options": [{"value": "M"}, {"value": "Black"}],
+                      "manage_inventory": false,
+                      "inventory_quantity": 30
+                    },
+                    {
+                      "title": "Large / Black",
+                      "prices": [{"currency_code": "usd", "amount": 5999}],
+                      "options": [{"value": "L"}, {"value": "Black"}],
+                      "manage_inventory": false,
+                      "inventory_quantity": 30
+                    }
+                  ]
+                }' || echo "Product creation failed"
+              
+              echo "✅ Products created successfully!"
+            else
+              echo "⚠️  Could not authenticate. Products not created."
             fi
             
-            echo "Medusa server is ready. Creating admin user and sample data..."
-            
-            # Install axios for API calls
-            npm install -g axios
-            
-            # Create seed data script
-            cat > /tmp/seed.js << 'SEEDEOF'
-            const axios = require('axios');
-            
-            const MEDUSA_URL = 'http://{{ .Release.Name }}-medusa:9000';
-            const ADMIN_EMAIL = 'admin@medusa-test.com';
-            const ADMIN_PASSWORD = 'supersecret';
-            
-            async function seed() {
-              try {
-                console.log('Creating admin user...');
-                
-                // Create admin user
-                try {
-                  await axios.post(`${MEDUSA_URL}/admin/users`, {
-                    email: ADMIN_EMAIL,
-                    password: ADMIN_PASSWORD
-                  });
-                  console.log('Admin user created successfully');
-                } catch (err) {
-                  if (err.response && err.response.status === 422) {
-                    console.log('Admin user already exists');
-                  } else {
-                    throw err;
-                  }
-                }
-                
-                // Login to get auth token
-                console.log('Logging in...');
-                const authRes = await axios.post(`${MEDUSA_URL}/admin/auth`, {
-                  email: ADMIN_EMAIL,
-                  password: ADMIN_PASSWORD
-                });
-                
-                const token = authRes.data.user.api_token || authRes.headers['set-cookie'];
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                
-                console.log('Creating region...');
-                
-                // Create a region
-                let regionId;
-                try {
-                  const regionRes = await axios.post(`${MEDUSA_URL}/admin/regions`, {
-                    name: 'Default Region',
-                    currency_code: 'usd',
-                    countries: ['us', 'ca', 'gb', 'de', 'fr'],
-                    payment_providers: ['manual'],
-                    fulfillment_providers: ['manual']
-                  }, { headers });
-                  
-                  regionId = regionRes.data.region.id;
-                  console.log(`Region created with ID: ${regionId}`);
-                } catch (err) {
-                  console.log('Could not create region, it may already exist');
-                  // Try to get existing region
-                  const regionsRes = await axios.get(`${MEDUSA_URL}/admin/regions`, { headers });
-                  if (regionsRes.data.regions.length > 0) {
-                    regionId = regionsRes.data.regions[0].id;
-                    console.log(`Using existing region: ${regionId}`);
-                  }
-                }
-                
-                if (!regionId) {
-                  console.error('No region available');
-                  return;
-                }
-                
-                console.log('Creating sample products...');
-                
-                // Sample products
-                const products = [
-                  {
-                    title: 'Premium Wireless Headphones',
-                    description: 'High-quality wireless headphones with noise cancellation and premium sound quality.',
-                    is_giftcard: false,
-                    discountable: true,
-                    options: [{ title: 'Color', values: ['Black', 'Silver'] }],
-                    variants: [
-                      { title: 'Black', prices: [{ currency_code: 'usd', amount: 14999 }], inventory_quantity: 100 },
-                      { title: 'Silver', prices: [{ currency_code: 'usd', amount: 14999 }], inventory_quantity: 100 }
-                    ]
-                  },
-                  {
-                    title: 'Classic Cotton T-Shirt',
-                    description: 'Comfortable 100% cotton t-shirt. Available in multiple sizes.',
-                    is_giftcard: false,
-                    discountable: true,
-                    options: [{ title: 'Size', values: ['S', 'M', 'L', 'XL'] }],
-                    variants: [
-                      { title: 'S', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
-                      { title: 'M', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
-                      { title: 'L', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
-                      { title: 'XL', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 }
-                    ]
-                  },
-                  {
-                    title: 'Stainless Steel Water Bottle',
-                    description: 'Eco-friendly insulated water bottle. Keeps drinks cold for 24 hours.',
-                    is_giftcard: false,
-                    discountable: true,
-                    options: [{ title: 'Capacity', values: ['500ml', '1L'] }],
-                    variants: [
-                      { title: '500ml', prices: [{ currency_code: 'usd', amount: 2999 }], inventory_quantity: 75 },
-                      { title: '1L', prices: [{ currency_code: 'usd', amount: 3499 }], inventory_quantity: 75 }
-                    ]
-                  },
-                  {
-                    title: 'Smart Fitness Tracker',
-                    description: 'Track your fitness goals with heart rate monitoring and step counting.',
-                    is_giftcard: false,
-                    discountable: true,
-                    options: [{ title: 'Color', values: ['Black', 'Blue'] }],
-                    variants: [
-                      { title: 'Black', prices: [{ currency_code: 'usd', amount: 8999 }], inventory_quantity: 30 },
-                      { title: 'Blue', prices: [{ currency_code: 'usd', amount: 8999 }], inventory_quantity: 30 }
-                    ]
-                  },
-                  {
-                    title: 'Professional Yoga Mat',
-                    description: 'Non-slip yoga mat with extra cushioning. Perfect for all exercises.',
-                    is_giftcard: false,
-                    discountable: true,
-                    options: [{ title: 'Color', values: ['Purple', 'Green', 'Blue'] }],
-                    variants: [
-                      { title: 'Purple', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 },
-                      { title: 'Green', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 },
-                      { title: 'Blue', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 }
-                    ]
-                  }
-                ];
-                
-                for (const product of products) {
-                  try {
-                    await axios.post(`${MEDUSA_URL}/admin/products`, product, { headers });
-                    console.log(`Created product: ${product.title}`);
-                  } catch (err) {
-                    console.error(`Failed to create product ${product.title}:`, err.response?.data || err.message);
-                  }
-                }
-                
-                console.log('✅ Seeding completed successfully!');
-                console.log(`Admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
-                
-              } catch (error) {
-                console.error('Seeding failed:', error.response?.data || error.message);
-                process.exit(1);
-              }
-            }
-            
-            seed();
-            SEEDEOF
-            
-            # Run the seed script
-            node /tmp/seed.js
-            
-            echo "Setup complete! 🎉"
+            echo ""
+            echo "================================================"
+            echo "✅ Medusa setup completed!"
+            echo "================================================"
+            echo "Admin Login:"
+            echo "  Email: {{ .Values.medusa.adminEmail }}"
+            echo "  Password: {{ .Values.medusa.adminPassword }}"
+            echo "================================================"
         env:
+        {{- range $key, $value := .Values.medusa.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- if .Values.secrets.createSecret }}
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-db-secret
-              key: database-url
+              name: {{ include "medusa.fullname" . }}-secret
+              key: DATABASE_URL
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-db-secret
-              key: redis-url
+              name: {{ include "medusa.fullname" . }}-secret
+              key: REDIS_URL
+        {{- end }}
