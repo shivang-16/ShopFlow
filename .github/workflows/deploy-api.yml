@@ -93,10 +93,14 @@ jobs:
           curl -f http://localhost:30001/health || exit 1
 
       - name: Cleanup old Docker images
-        if: success()
+        if: always()
         run: |
-          echo "🧹 Cleaning up old Docker images..."
-          docker image prune -af --filter "until=24h"
+          echo "🧹 Cleaning up Docker images..."
+          # Remove the specific image built in this run to save space immediately
+          docker rmi shopflow-api:${{ github.sha }} || true
+          # Prune dangling images and build cache
+          docker image prune -f
+          docker builder prune -f
           echo "✅ Cleanup complete!"
 
       - name: Deployment success

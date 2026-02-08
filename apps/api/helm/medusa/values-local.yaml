@@ -1,8 +1,8 @@
 medusa:
   image:
-    repository: nginx
-    tag: alpine
-    pullPolicy: IfNotPresent
+    repository: ghcr.io/shivang-16/shopflow-medusa
+    tag: latest
+    pullPolicy: Always
   
   resources:
     requests:
@@ -13,8 +13,9 @@ medusa:
       cpu: "1000m"
   
   service:
-    type: ClusterIP
-    port: 80
+    type: NodePort
+    port: 9000
+    nodePort: 31900
   
   env:
     NODE_ENV: "development"
@@ -24,9 +25,9 @@ medusa:
   readinessProbe:
     enabled: true
     httpGet:
-      path: /
-      port: 80
-    initialDelaySeconds: 10
+      path: /health
+      port: 9000
+    initialDelaySeconds: 60
     periodSeconds: 10
     timeoutSeconds: 5
     successThreshold: 1
@@ -35,9 +36,9 @@ medusa:
   livenessProbe:
     enabled: true
     httpGet:
-      path: /
-      port: 80
-    initialDelaySeconds: 30
+      path: /health
+      port: 9000
+    initialDelaySeconds: 90
     periodSeconds: 20
     timeoutSeconds: 5
     failureThreshold: 3

@@ -40,7 +40,7 @@ spec:
         - name: COOKIE_SECRET
           value: "some-cookie-secret-change-me"
         ports:
-        - containerPort: 80
+        - containerPort: 9000
           name: http
         {{- if .Values.medusa.resources }}
         resources:

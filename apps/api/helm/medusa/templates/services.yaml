@@ -1,6 +1,25 @@
 apiVersion: v1
 kind: Service
 metadata:
+  name: {{ .Release.Name }}-medusa
+  labels:
+    app: {{ .Release.Name }}-medusa
+spec:
+  type: {{ .Values.medusa.service.type }}
+  ports:
+  - port: {{ .Values.medusa.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+    {{- if and (eq .Values.medusa.service.type "NodePort") .Values.medusa.service.nodePort }}
+    nodePort: {{ .Values.medusa.service.nodePort }}
+    {{- end }}
+  selector:
+    app: {{ .Release.Name }}-medusa
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: {{ .Release.Name }}-postgresql
   labels:
     app: {{ .Release.Name }}-postgresql
@@ -8,7 +27,7 @@ spec:
   type: ClusterIP
   ports:
   - port: 5432
-    targetPort: 5432
+    targetPort: postgresql
     protocol: TCP
     name: postgresql
   selector:
@@ -24,24 +43,8 @@ spec:
   type: ClusterIP
   ports:
   - port: 6379
-    targetPort: 6379
+    targetPort: redis
     protocol: TCP
     name: redis
   selector:
     app: {{ .Release.Name }}-redis
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Release.Name }}-medusa
-  labels:
-    app: {{ .Release.Name }}-medusa
-spec:
-  type: {{ .Values.medusa.service.type }}
-  ports:
-  - port: {{ .Values.medusa.service.port }}
-    targetPort: 80
-    protocol: TCP
-    name: http
-  selector:
-    app: {{ .Release.Name }}-medusa

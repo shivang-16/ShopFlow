@@ -1,0 +1,219 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-setup
+  labels:
+    app: {{ .Release.Name }}-medusa
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-setup-job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: setup
+        image: node:18-alpine
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            set -e
+            
+            echo "Installing dependencies..."
+            apk add --no-cache curl postgresql-client
+            
+            echo "Waiting for Medusa server to be ready..."
+            sleep 60
+            
+            RETRIES=0
+            MAX_RETRIES=30
+            until curl -sf http://{{ .Release.Name }}-medusa:9000/health > /dev/null 2>&1 || [ $RETRIES -eq $MAX_RETRIES ]; do
+              echo "Waiting for Medusa server... (attempt $RETRIES/$MAX_RETRIES)"
+              sleep 10
+              RETRIES=$((RETRIES+1))
+            done
+            
+            if [ $RETRIES -eq $MAX_RETRIES ]; then
+              echo "ERROR: Medusa server did not become ready in time"
+              exit 1
+            fi
+            
+            echo "Medusa server is ready. Creating admin user and sample data..."
+            
+            # Install axios for API calls
+            npm install -g axios
+            
+            # Create seed data script
+            cat > /tmp/seed.js << 'SEEDEOF'
+            const axios = require('axios');
+            
+            const MEDUSA_URL = 'http://{{ .Release.Name }}-medusa:9000';
+            const ADMIN_EMAIL = 'admin@medusa-test.com';
+            const ADMIN_PASSWORD = 'supersecret';
+            
+            async function seed() {
+              try {
+                console.log('Creating admin user...');
+                
+                // Create admin user
+                try {
+                  await axios.post(`${MEDUSA_URL}/admin/users`, {
+                    email: ADMIN_EMAIL,
+                    password: ADMIN_PASSWORD
+                  });
+                  console.log('Admin user created successfully');
+                } catch (err) {
+                  if (err.response && err.response.status === 422) {
+                    console.log('Admin user already exists');
+                  } else {
+                    throw err;
+                  }
+                }
+                
+                // Login to get auth token
+                console.log('Logging in...');
+                const authRes = await axios.post(`${MEDUSA_URL}/admin/auth`, {
+                  email: ADMIN_EMAIL,
+                  password: ADMIN_PASSWORD
+                });
+                
+                const token = authRes.data.user.api_token || authRes.headers['set-cookie'];
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                
+                console.log('Creating region...');
+                
+                // Create a region
+                let regionId;
+                try {
+                  const regionRes = await axios.post(`${MEDUSA_URL}/admin/regions`, {
+                    name: 'Default Region',
+                    currency_code: 'usd',
+                    countries: ['us', 'ca', 'gb', 'de', 'fr'],
+                    payment_providers: ['manual'],
+                    fulfillment_providers: ['manual']
+                  }, { headers });
+                  
+                  regionId = regionRes.data.region.id;
+                  console.log(`Region created with ID: ${regionId}`);
+                } catch (err) {
+                  console.log('Could not create region, it may already exist');
+                  // Try to get existing region
+                  const regionsRes = await axios.get(`${MEDUSA_URL}/admin/regions`, { headers });
+                  if (regionsRes.data.regions.length > 0) {
+                    regionId = regionsRes.data.regions[0].id;
+                    console.log(`Using existing region: ${regionId}`);
+                  }
+                }
+                
+                if (!regionId) {
+                  console.error('No region available');
+                  return;
+                }
+                
+                console.log('Creating sample products...');
+                
+                // Sample products
+                const products = [
+                  {
+                    title: 'Premium Wireless Headphones',
+                    description: 'High-quality wireless headphones with noise cancellation and premium sound quality.',
+                    is_giftcard: false,
+                    discountable: true,
+                    options: [{ title: 'Color', values: ['Black', 'Silver'] }],
+                    variants: [
+                      { title: 'Black', prices: [{ currency_code: 'usd', amount: 14999 }], inventory_quantity: 100 },
+                      { title: 'Silver', prices: [{ currency_code: 'usd', amount: 14999 }], inventory_quantity: 100 }
+                    ]
+                  },
+                  {
+                    title: 'Classic Cotton T-Shirt',
+                    description: 'Comfortable 100% cotton t-shirt. Available in multiple sizes.',
+                    is_giftcard: false,
+                    discountable: true,
+                    options: [{ title: 'Size', values: ['S', 'M', 'L', 'XL'] }],
+                    variants: [
+                      { title: 'S', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
+                      { title: 'M', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
+                      { title: 'L', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 },
+                      { title: 'XL', prices: [{ currency_code: 'usd', amount: 2499 }], inventory_quantity: 50 }
+                    ]
+                  },
+                  {
+                    title: 'Stainless Steel Water Bottle',
+                    description: 'Eco-friendly insulated water bottle. Keeps drinks cold for 24 hours.',
+                    is_giftcard: false,
+                    discountable: true,
+                    options: [{ title: 'Capacity', values: ['500ml', '1L'] }],
+                    variants: [
+                      { title: '500ml', prices: [{ currency_code: 'usd', amount: 2999 }], inventory_quantity: 75 },
+                      { title: '1L', prices: [{ currency_code: 'usd', amount: 3499 }], inventory_quantity: 75 }
+                    ]
+                  },
+                  {
+                    title: 'Smart Fitness Tracker',
+                    description: 'Track your fitness goals with heart rate monitoring and step counting.',
+                    is_giftcard: false,
+                    discountable: true,
+                    options: [{ title: 'Color', values: ['Black', 'Blue'] }],
+                    variants: [
+                      { title: 'Black', prices: [{ currency_code: 'usd', amount: 8999 }], inventory_quantity: 30 },
+                      { title: 'Blue', prices: [{ currency_code: 'usd', amount: 8999 }], inventory_quantity: 30 }
+                    ]
+                  },
+                  {
+                    title: 'Professional Yoga Mat',
+                    description: 'Non-slip yoga mat with extra cushioning. Perfect for all exercises.',
+                    is_giftcard: false,
+                    discountable: true,
+                    options: [{ title: 'Color', values: ['Purple', 'Green', 'Blue'] }],
+                    variants: [
+                      { title: 'Purple', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 },
+                      { title: 'Green', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 },
+                      { title: 'Blue', prices: [{ currency_code: 'usd', amount: 4999 }], inventory_quantity: 40 }
+                    ]
+                  }
+                ];
+                
+                for (const product of products) {
+                  try {
+                    await axios.post(`${MEDUSA_URL}/admin/products`, product, { headers });
+                    console.log(`Created product: ${product.title}`);
+                  } catch (err) {
+                    console.error(`Failed to create product ${product.title}:`, err.response?.data || err.message);
+                  }
+                }
+                
+                console.log('✅ Seeding completed successfully!');
+                console.log(`Admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+                
+              } catch (error) {
+                console.error('Seeding failed:', error.response?.data || error.message);
+                process.exit(1);
+              }
+            }
+            
+            seed();
+            SEEDEOF
+            
+            # Run the seed script
+            node /tmp/seed.js
+            
+            echo "Setup complete! 🎉"
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: redis-url

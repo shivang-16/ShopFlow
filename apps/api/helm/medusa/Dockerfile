@@ -1,25 +1,21 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ curl git
 
-# Install Medusa CLI
-RUN npm install -g @medusajs/medusa-cli
+RUN npm install -g @medusajs/medusa-cli@latest
 
-# Create a new Medusa project
-RUN medusa new . --skip-db
+RUN medusa new medusa-store --skip-db --skip-env --skip-migrations
 
-# Install dependencies
-RUN npm install
+WORKDIR /app/medusa-store
 
-# Expose port
+RUN npm install --loglevel=error
+
 EXPOSE 9000
 
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:9000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); });"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+  CMD curl -f http://localhost:9000/health || exit 1
 
-# Start Medusa
-CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "npx medusa migrations run && npx medusa start"]
+

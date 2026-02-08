@@ -496,11 +496,14 @@ class K8sService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    const valuesFile = isProduction ? 'values-prod.yaml' : 'values-local.yaml';
+
     const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
       --set ingress.host=${domain} \
       --set postgresql.auth.password=${dbPass} \
-      --values "${chartPath}/values-local.yaml" \
+      --values "${chartPath}/${valuesFile}" \
       --wait --timeout 10m`;
 
     logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (Medusa)...`);
