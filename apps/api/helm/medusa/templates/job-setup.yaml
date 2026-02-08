@@ -9,10 +9,9 @@ metadata:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation
-    "helm.sh/hook-timeout": "600s"
 spec:
+  ttlSecondsAfterFinished: 300
   backoffLimit: 3
-  activeDeadlineSeconds: 600
   template:
     metadata:
       labels:
@@ -52,120 +51,18 @@ spec:
             echo "Seeding database with sample data..."
             npx medusa seed -f ./data/seed.json || echo "Seed might have already run"
             
-            echo "Creating additional sample products via API..."
-            sleep 10
+            echo "Creating Publishable API Key directly in database..."
+            # Generate a publishable key ID
+            PUB_KEY_ID="pk_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 24 | head -n 1)"
             
-            # Try to login and get token
-            TOKEN=$(curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/auth \
-              -H "Content-Type: application/json" \
-              -d '{"email":"{{ .Values.medusa.adminEmail }}","password":"{{ .Values.medusa.adminPassword }}"}' \
-              2>/dev/null | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+            # Insert directly into database
+            PGPASSWORD="{{ .Values.postgresql.auth.password }}" psql -h {{ .Release.Name }}-postgresql -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "
+              INSERT INTO publishable_api_key (id, created_at, updated_at, created_by, revoked_by, revoked_at)
+              VALUES ('$PUB_KEY_ID', NOW(), NOW(), NULL, NULL, NULL)
+              ON CONFLICT (id) DO NOTHING;
+            " 2>&1 || echo "⚠️ Could not create API key in database"
             
-            if [ -n "$TOKEN" ]; then
-              echo "Successfully authenticated! Token obtained."
-              
-              # Create Publishable API Key for Store API
-              echo "Creating Publishable API Key for Store API..."
-              PUB_KEY=$(curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/publishable-api-keys \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $TOKEN" \
-                -d '{"title":"Store Frontend Key"}' \
-                2>/dev/null | grep -o '"id":"pk_[^"]*' | cut -d'"' -f4)
-              
-              if [ -n "$PUB_KEY" ]; then
-                echo "✅ Publishable API Key created: $PUB_KEY"
-                echo "   Use this key with: x-publishable-api-key: $PUB_KEY"
-              else
-                echo "⚠️  Could not create publishable API key"
-              fi
-              
-              echo "Creating additional products..."
-              
-              # Create T-Shirt
-              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $TOKEN" \
-                -d '{
-                  "title": "Classic T-Shirt",
-                  "subtitle": "Comfortable cotton tee",
-                  "description": "A soft and comfortable cotton t-shirt perfect for everyday wear",
-                  "handle": "classic-tshirt",
-                  "status": "published",
-                  "options": [{"title": "Size"}],
-                  "variants": [
-                    {
-                      "title": "Small",
-                      "prices": [{"currency_code": "usd", "amount": 2999}],
-                      "options": [{"value": "S"}],
-                      "manage_inventory": false,
-                      "inventory_quantity": 100
-                    },
-                    {
-                      "title": "Medium", 
-                      "prices": [{"currency_code": "usd", "amount": 2999}],
-                      "options": [{"value": "M"}],
-                      "manage_inventory": false,
-                      "inventory_quantity": 100
-                    },
-                    {
-                      "title": "Large",
-                      "prices": [{"currency_code": "usd", "amount": 2999}],
-                      "options": [{"value": "L"}],
-                      "manage_inventory": false,
-                      "inventory_quantity": 100
-                    }
-                  ]
-                }' || echo "Product creation failed"
-              
-              # Create Coffee Mug
-              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $TOKEN" \
-                -d '{
-                  "title": "Ceramic Coffee Mug",
-                  "subtitle": "Start your day right",
-                  "description": "Premium ceramic mug perfect for your morning coffee",
-                  "handle": "ceramic-mug",
-                  "status": "published",
-                  "variants": [{
-                    "title": "Default",
-                    "prices": [{"currency_code": "usd", "amount": 1499}],
-                    "manage_inventory": false,
-                    "inventory_quantity": 50
-                  }]
-                }' || echo "Product creation failed"
-              
-              # Create Hoodie
-              curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/products \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $TOKEN" \
-                -d '{
-                  "title": "Cozy Hoodie",
-                  "subtitle": "Stay warm and stylish",
-                  "description": "Super soft fleece hoodie with front pocket",
-                  "handle": "cozy-hoodie",
-                  "status": "published",
-                  "options": [{"title": "Size"}, {"title": "Color"}],
-                  "variants": [
-                    {
-                      "title": "Medium / Black",
-                      "prices": [{"currency_code": "usd", "amount": 5999}],
-                      "options": [{"value": "M"}, {"value": "Black"}],
-                      "manage_inventory": false,
-                      "inventory_quantity": 30
-                    },
-                    {
-                      "title": "Large / Black",
-                      "prices": [{"currency_code": "usd", "amount": 5999}],
-                      "options": [{"value": "L"}, {"value": "Black"}],
-                      "manage_inventory": false,
-                      "inventory_quantity": 30
-                    }
-                  ]
-                }' || echo "Product creation failed"
-              
-              echo "✅ Products created successfully!"
-              
+            if [ $? -eq 0 ]; then
               echo ""
               echo "================================================"
               echo "✅ Medusa setup completed!"
@@ -174,16 +71,14 @@ spec:
               echo "  Email: {{ .Values.medusa.adminEmail }}"
               echo "  Password: {{ .Values.medusa.adminPassword }}"
               echo ""
-              echo "Publishable API Key:"
-              echo "  Key: $PUB_KEY"
-              echo "  Usage: Add header 'x-publishable-api-key: $PUB_KEY'"
+              echo "Publishable API Key (use in x-publishable-api-key header):"
+              echo "  $PUB_KEY_ID"
               echo ""
-              echo "Store API Examples:"
-              echo "  Products: GET /store/products"
-              echo "  Collections: GET /store/collections"
+              echo "Store API Usage:"
+              echo "  curl http://{{ .Release.Name }}:9000/store/products \\"
+              echo "    -H \"x-publishable-api-key: $PUB_KEY_ID\""
               echo "================================================"
             else
-              echo "⚠️  Could not authenticate. Products and API key not created."
               echo ""
               echo "================================================"
               echo "✅ Medusa setup completed (partial)!"
@@ -191,6 +86,11 @@ spec:
               echo "Admin Login:"
               echo "  Email: {{ .Values.medusa.adminEmail }}"
               echo "  Password: {{ .Values.medusa.adminPassword }}"
+              echo ""
+              echo "⚠️ Please create Publishable API Key manually:"
+              echo "  1. Login to admin panel"
+              echo "  2. Go to Settings → Developer → Publishable API Keys"
+              echo "  3. Create a new key"
               echo "================================================"
             fi
         env:
