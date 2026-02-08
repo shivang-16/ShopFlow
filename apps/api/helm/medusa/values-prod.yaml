@@ -18,7 +18,7 @@ medusa:
     nodePort: null
   
   env:
-    NODE_ENV: "production"
+    NODE_ENV: "development"
     ADMIN_CORS: "*"
     STORE_CORS: "*"
     DATABASE_URL: ""
