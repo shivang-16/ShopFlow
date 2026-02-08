@@ -1,7 +1,7 @@
 medusa:
   image:
     repository: ghcr.io/shivang-16/shopflow-medusa
-    tag: "main-ef5e0b8"
+    tag: latest
     pullPolicy: Always
   
   resources:

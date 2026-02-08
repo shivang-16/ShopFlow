@@ -10,6 +10,9 @@ RUN medusa new medusa-store --skip-db --skip-env --skip-migrations
 
 WORKDIR /app/medusa-store
 
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
 RUN npx medusa build > build_log.txt 2>&1 || (cat build_log.txt && exit 1)
 RUN cat build_log.txt
 RUN echo "Checking build directory..."
