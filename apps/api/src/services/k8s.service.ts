@@ -288,6 +288,45 @@ class K8sService {
     }
   }
 
+  async updateWordPressSiteUrl(namespace: string, releaseName: string, siteUrl: string): Promise<void> {
+    const sanitizedReleaseName = releaseName
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const command = `kubectl run wp-update-url --image=wordpress:cli-php8.1 --rm -i --restart=Never --namespace=${namespace} --overrides='
+{
+  "spec": {
+    "securityContext": {"runAsUser": 0, "runAsGroup": 0},
+    "containers": [{
+      "name": "wp-update",
+      "image": "wordpress:cli-php8.1",
+      "stdin": true,
+      "command": ["/bin/sh", "-c"],
+      "args": ["wp option update home ${siteUrl} --path=/var/www/html --allow-root && wp option update siteurl ${siteUrl} --path=/var/www/html --allow-root"],
+      "volumeMounts": [{"name": "wordpress-data", "mountPath": "/var/www/html"}],
+      "env": [
+        {"name": "WORDPRESS_DB_HOST", "value": "${sanitizedReleaseName}-mariadb"},
+        {"name": "WORDPRESS_DB_NAME", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-database"}}},
+        {"name": "WORDPRESS_DB_USER", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-user"}}},
+        {"name": "WORDPRESS_DB_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-password"}}}
+      ]
+    }],
+    "volumes": [{"name": "wordpress-data", "persistentVolumeClaim": {"claimName": "${sanitizedReleaseName}-wordpress-pvc"}}]
+  }
+}'`;
+
+    try {
+      logger.info(`Updating WordPress site URL to: ${siteUrl}`);
+      await execAsync(command);
+      logger.info(`WordPress site URL updated successfully`);
+    } catch (err: any) {
+      logger.error(`Error updating WordPress site URL:`, err);
+      throw err;
+    }
+  }
+
   async checkHelmRelease(releaseName: string, namespace: string): Promise<boolean> {
     try {
       const command = `helm status ${releaseName} -n ${namespace}`;

@@ -5,6 +5,7 @@ wordpress:
     pullPolicy: IfNotPresent
   
   adminPassword: "ChangeMe123!"
+  siteUrl: "http://localhost"
   
   resources:
     requests:

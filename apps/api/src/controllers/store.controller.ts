@@ -157,9 +157,14 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
-        const nodePort = await k8sService.getStoreNodePort(store.name, namespace);
+        const nodePort = await k8sService.getStoreNodePort(sanitizedName, namespace);
         const publicIP = process.env.PUBLIC_IP || "localhost";
         const storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
+
+        // Update WordPress site URL to the actual NodePort URL
+        if (nodePort && type === "WOOCOMMERCE") {
+          await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, storeUrl);
+        }
 
         await prisma.store.update({
           where: { id: store.id },

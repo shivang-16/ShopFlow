@@ -64,7 +64,7 @@ spec:
             else
               echo "Installing WordPress..."
               wp core install \
-                --url="http://localhost" \
+                --url="{{ .Values.wordpress.siteUrl }}" \
                 --title="ShopFlow Store" \
                 --admin_user="admin" \
                 --admin_password="{{ .Values.wordpress.adminPassword }}" \
@@ -87,12 +87,23 @@ spec:
             
             echo "Creating sample products..."
             
+            echo "Downloading sample images..."
+            curl -o /tmp/headphones.jpg https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800 || true
+            curl -o /tmp/tshirt.jpg https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800 || true
+            curl -o /tmp/bottle.jpg https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800 || true
+            curl -o /tmp/yoga.jpg https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800 || true
+            curl -o /tmp/tracker.jpg https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=800 || true
+            
             # Product 1: Premium Wireless Headphones
             PRODUCT_ID_1=$(wp post create --post_type=product --post_title='Premium Wireless Headphones' --post_status=publish --post_content='High-quality wireless headphones with noise cancellation, 30-hour battery life, and premium sound quality. Perfect for music lovers and professionals.' --path=/var/www/html --allow-root --porcelain)
             wp post meta add $PRODUCT_ID_1 _regular_price 149.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_1 _price 149.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_1 _manage_stock no --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_1 _stock_status instock --path=/var/www/html --allow-root
+            if [ -f /tmp/headphones.jpg ]; then
+              IMG_ID_1=$(wp media import /tmp/headphones.jpg --post_id=$PRODUCT_ID_1 --title='Headphones' --path=/var/www/html --allow-root --porcelain)
+              wp post meta add $PRODUCT_ID_1 _thumbnail_id $IMG_ID_1 --path=/var/www/html --allow-root
+            fi
             
             # Product 2: Classic Cotton T-Shirt
             PRODUCT_ID_2=$(wp post create --post_type=product --post_title='Classic Cotton T-Shirt' --post_status=publish --post_content='Comfortable 100% cotton t-shirt. Available in multiple colors. Perfect for everyday wear.' --path=/var/www/html --allow-root --porcelain)
@@ -100,6 +111,10 @@ spec:
             wp post meta add $PRODUCT_ID_2 _price 24.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_2 _manage_stock no --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_2 _stock_status instock --path=/var/www/html --allow-root
+            if [ -f /tmp/tshirt.jpg ]; then
+              IMG_ID_2=$(wp media import /tmp/tshirt.jpg --post_id=$PRODUCT_ID_2 --title='T-Shirt' --path=/var/www/html --allow-root --porcelain)
+              wp post meta add $PRODUCT_ID_2 _thumbnail_id $IMG_ID_2 --path=/var/www/html --allow-root
+            fi
             
             # Product 3: Stainless Steel Water Bottle
             PRODUCT_ID_3=$(wp post create --post_type=product --post_title='Stainless Steel Water Bottle' --post_status=publish --post_content='Eco-friendly insulated water bottle. Keeps drinks cold for 24 hours or hot for 12 hours. BPA-free and leak-proof.' --path=/var/www/html --allow-root --porcelain)
@@ -107,6 +122,10 @@ spec:
             wp post meta add $PRODUCT_ID_3 _price 34.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_3 _manage_stock no --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_3 _stock_status instock --path=/var/www/html --allow-root
+            if [ -f /tmp/bottle.jpg ]; then
+              IMG_ID_3=$(wp media import /tmp/bottle.jpg --post_id=$PRODUCT_ID_3 --title='Water Bottle' --path=/var/www/html --allow-root --porcelain)
+              wp post meta add $PRODUCT_ID_3 _thumbnail_id $IMG_ID_3 --path=/var/www/html --allow-root
+            fi
             
             # Product 4: Professional Yoga Mat
             PRODUCT_ID_4=$(wp post create --post_type=product --post_title='Professional Yoga Mat' --post_status=publish --post_content='Non-slip yoga mat with extra cushioning. Perfect for yoga, pilates, and floor exercises. Includes carrying strap.' --path=/var/www/html --allow-root --porcelain)
@@ -114,6 +133,10 @@ spec:
             wp post meta add $PRODUCT_ID_4 _price 49.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_4 _manage_stock no --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_4 _stock_status instock --path=/var/www/html --allow-root
+            if [ -f /tmp/yoga.jpg ]; then
+              IMG_ID_4=$(wp media import /tmp/yoga.jpg --post_id=$PRODUCT_ID_4 --title='Yoga Mat' --path=/var/www/html --allow-root --porcelain)
+              wp post meta add $PRODUCT_ID_4 _thumbnail_id $IMG_ID_4 --path=/var/www/html --allow-root
+            fi
             
             # Product 5: Smart Fitness Tracker
             PRODUCT_ID_5=$(wp post create --post_type=product --post_title='Smart Fitness Tracker' --post_status=publish --post_content='Track your fitness goals with this smart fitness tracker. Features heart rate monitoring, step counting, and sleep tracking.' --path=/var/www/html --allow-root --porcelain)
@@ -121,6 +144,10 @@ spec:
             wp post meta add $PRODUCT_ID_5 _price 89.99 --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_5 _manage_stock no --path=/var/www/html --allow-root
             wp post meta add $PRODUCT_ID_5 _stock_status instock --path=/var/www/html --allow-root
+            if [ -f /tmp/tracker.jpg ]; then
+              IMG_ID_5=$(wp media import /tmp/tracker.jpg --post_id=$PRODUCT_ID_5 --title='Fitness Tracker' --path=/var/www/html --allow-root --porcelain)
+              wp post meta add $PRODUCT_ID_5 _thumbnail_id $IMG_ID_5 --path=/var/www/html --allow-root
+            fi
             
             echo "Creating blog posts..."
             
