@@ -131,6 +131,14 @@ export const createStore = async (req: Request, res: Response) => {
             wpAdminPassword,
             adminEmail
           );
+          
+          // Wait a bit for resources to be created
+          logger.info(`[${store.id}] Waiting 5s for Kubernetes resources to be created...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          // Verify resources were created
+          const resourceCheck = await k8sService.verifyNamespaceResources(namespace);
+          logger.info(`[${store.id}] Resource check:`, resourceCheck);
         } else {
           throw new Error(`Unsupported store type: ${type}`);
         }

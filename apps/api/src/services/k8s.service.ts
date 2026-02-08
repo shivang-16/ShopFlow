@@ -24,6 +24,7 @@ interface PodStatus {
 class K8sService {
   private k8sApi: CoreV1Api | null = null;
   private appsApi: AppsV1Api | null = null;
+  private batchApi: BatchV1Api | null = null;
   private k8sConfig: KubeConfig;
 
   constructor() {
@@ -32,6 +33,7 @@ class K8sService {
       this.k8sConfig.loadFromDefault();
       this.k8sApi = this.k8sConfig.makeApiClient(CoreV1Api);
       this.appsApi = this.k8sConfig.makeApiClient(AppsV1Api);
+      this.batchApi = this.k8sConfig.makeApiClient(BatchV1Api);
     } catch (error) {
       logger.warn("Failed to load Kubernetes config. K8s features will be disabled.", error);
     }
@@ -567,9 +569,19 @@ class K8sService {
       const { stdout, stderr } = await execAsync(command);
       logger.info(`Helm install output: ${stdout}`);
       if (stderr) logger.warn(`Helm stderr: ${stderr}`);
+      
+      // Check if release was actually created
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const releaseCheck = await this.checkHelmRelease(sanitizedReleaseName, namespace);
+      if (!releaseCheck) {
+        throw new Error(`Helm release ${sanitizedReleaseName} was not created successfully`);
+      }
+      
+      logger.info(`✅ Helm release ${sanitizedReleaseName} created successfully in namespace ${namespace}`);
       return { success: true };
     } catch (error: any) {
-      logger.error(`Helm install failed:`, error);
+      logger.error(`❌ Helm install FAILED for ${sanitizedReleaseName}:`, error.message);
+      logger.error(`Full error:`, error);
       throw error;
     }
   }
@@ -589,6 +601,43 @@ class K8sService {
       }
       logger.error(`Helm uninstall failed:`, error);
       throw error;
+    }
+  }
+
+  async verifyNamespaceResources(namespace: string): Promise<{
+    deployments: number;
+    pods: number;
+    services: number;
+    secrets: number;
+    jobs: number;
+  }> {
+    if (!this.k8sApi || !this.appsApi || !this.batchApi) {
+      logger.warn("K8s API clients not available for resource verification");
+      return { deployments: 0, pods: 0, services: 0, secrets: 0, jobs: 0 };
+    }
+
+    try {
+      const [deployments, pods, services, secrets, jobs] = await Promise.all([
+        this.appsApi.listNamespacedDeployment({ namespace }).catch(() => ({ items: [] })),
+        this.k8sApi.listNamespacedPod({ namespace }).catch(() => ({ items: [] })),
+        this.k8sApi.listNamespacedService({ namespace }).catch(() => ({ items: [] })),
+        this.k8sApi.listNamespacedSecret({ namespace }).catch(() => ({ items: [] })),
+        this.batchApi.listNamespacedJob({ namespace }).catch(() => ({ items: [] }))
+      ]);
+
+      const result = {
+        deployments: deployments.items?.length || 0,
+        pods: pods.items?.length || 0,
+        services: services.items?.length || 0,
+        secrets: secrets.items?.length || 0,
+        jobs: jobs.items?.length || 0
+      };
+
+      logger.info(`[VERIFY] Namespace ${namespace} has: ${result.deployments} deployments, ${result.pods} pods, ${result.services} services, ${result.secrets} secrets, ${result.jobs} jobs`);
+      return result;
+    } catch (err: any) {
+      logger.error(`Error verifying namespace resources:`, err);
+      return { deployments: 0, pods: 0, services: 0, secrets: 0, jobs: 0 };
     }
   }
 }
