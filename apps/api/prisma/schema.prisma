@@ -19,17 +19,19 @@ enum StoreStatus {
 }
 
 model Store {
-  id          String      @id @default(uuid())
-  name        String
-  subdomain   String      @unique
-  type        StoreType
-  status      StoreStatus @default(PROVISIONING)
-  userId      String?
-  dbName      String?
-  dbUser      String?
-  dbPassword  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  name            String
+  subdomain       String      @unique
+  type            StoreType
+  status          StoreStatus @default(PROVISIONING)
+  userId          String?
+  dbName          String?
+  dbUser          String?
+  dbPassword      String?
+  wpAdminPassword String?
+  errorMessage    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model AuditLog {

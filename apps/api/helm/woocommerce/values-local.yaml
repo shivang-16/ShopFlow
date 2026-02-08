@@ -4,6 +4,8 @@ wordpress:
     tag: 6.8-php8.1-apache
     pullPolicy: IfNotPresent
   
+  adminPassword: "ChangeMe123!"
+  
   resources:
     requests:
       memory: "128Mi"

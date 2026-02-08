@@ -172,7 +172,10 @@ class K8sService {
         };
       });
 
-      const allReady = podStatuses.every(ps => ps.ready && ps.phase === "Running");
+      const runningPods = podStatuses.filter(ps => ps.phase === "Running" || ps.phase === "Succeeded");
+      const allReady = runningPods.length > 0 && runningPods.every(ps => 
+        (ps.phase === "Running" && ps.ready) || ps.phase === "Succeeded"
+      );
       const anyFailed = podStatuses.some(ps => ps.phase === "Failed" || ps.restarts > 5);
 
       if (anyFailed) {
@@ -300,7 +303,8 @@ class K8sService {
     namespace: string,
     domain: string,
     dbPassword?: string,
-    dbRootPassword?: string
+    dbRootPassword?: string,
+    wpAdminPassword?: string
   ) {
     const chartPath = path.resolve(__dirname, "../../helm/woocommerce");
 
@@ -315,6 +319,7 @@ class K8sService {
 
     const dbPass = dbPassword || this.generateSecurePassword();
     const dbRootPass = dbRootPassword || this.generateSecurePassword();
+    const wpPass = wpAdminPassword || this.generateSecurePassword(16);
 
     // Sanitize release name for Helm (no spaces, lowercase, only hyphens)
     const sanitizedReleaseName = releaseName
@@ -328,6 +333,7 @@ class K8sService {
       --set ingress.host=${domain} \
       --set mariadb.auth.password=${dbPass} \
       --set mariadb.auth.rootPassword=${dbRootPass} \
+      --set wordpress.adminPassword=${wpPass} \
       --values "${chartPath}/values-local.yaml" \
       --wait --timeout 10m`;
 
@@ -337,7 +343,7 @@ class K8sService {
       const { stdout, stderr } = await execAsync(command);
       logger.info(`Helm install output: ${stdout}`);
       if (stderr) logger.warn(`Helm stderr: ${stderr}`);
-      return { success: true, dbPassword: dbPass, dbRootPassword: dbRootPass };
+      return { success: true, dbPassword: dbPass, dbRootPassword: dbRootPass, wpAdminPassword: wpPass };
     } catch (error: any) {
       logger.error(`Helm install failed:`, error);
       throw error;

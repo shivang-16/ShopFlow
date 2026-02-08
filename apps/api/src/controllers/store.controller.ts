@@ -7,18 +7,32 @@ import { logger } from "../logger";
 const MAX_STORES_PER_USER = 5;
 const PROVISIONING_TIMEOUT = 600000;
 
-function validateStoreName(name: string): { valid: boolean; error?: string } {
-  if (!name || name.length < 3) {
+function sanitizeStoreName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/^[^a-z]+/, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50);
+}
+
+function validateStoreName(name: string): { valid: boolean; error?: string; sanitized?: string } {
+  if (!name || name.trim().length < 3) {
     return { valid: false, error: "Store name must be at least 3 characters" };
   }
-  if (name.length > 50) {
-    return { valid: false, error: "Store name must be less than 50 characters" };
+  if (name.length > 100) {
+    return { valid: false, error: "Store name must be less than 100 characters" };
   }
-  // Must start with a letter and only contain lowercase letters, numbers, and hyphens
-  if (!/^[a-z][a-z0-9-]*$/.test(name)) {
-    return { valid: false, error: "Store name must start with a letter and can only contain lowercase letters, numbers, and hyphens" };
+  
+  const sanitized = sanitizeStoreName(name);
+  
+  if (!sanitized || sanitized.length < 3) {
+    return { valid: false, error: "Store name must contain at least 3 valid characters (letters or numbers)" };
   }
-  return { valid: true };
+  
+  return { valid: true, sanitized };
 }
 
 export const createStore = async (req: Request, res: Response) => {
@@ -36,6 +50,8 @@ export const createStore = async (req: Request, res: Response) => {
     return res.status(400).json({ error: validation.error });
   }
 
+  const sanitizedName = validation.sanitized!;
+
   if (!["WOOCOMMERCE", "MEDUSA"].includes(type)) {
     logger.warn(`Store creation failed: Invalid store type "${type}"`);
     return res.status(400).json({ error: "Invalid store type. Must be WOOCOMMERCE or MEDUSA" });
@@ -47,7 +63,7 @@ export const createStore = async (req: Request, res: Response) => {
     });
     const baseDomain = process.env.BASE_DOMAIN || "local.test";
     const ingressPort = process.env.INGRESS_HTTP_PORT || "";
-    const subdomain = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${baseDomain}`;
+    const subdomain = sanitizedName + `.${baseDomain}`;
     const fullUrl = ingressPort ? `http://${subdomain}:${ingressPort}` : `http://${subdomain}`;
 
     const existingStore = await prisma.store.findUnique({
@@ -60,12 +76,13 @@ export const createStore = async (req: Request, res: Response) => {
 
     const dbPassword = k8sService.generateSecurePassword(20);
     const dbRootPassword = k8sService.generateSecurePassword(20);
+    const wpAdminPassword = k8sService.generateSecurePassword(16);
     const dbUser = "wordpress";
     const dbName = "wordpress";
 
     const store = await prisma.store.create({
       data: {
-        name,
+        name: sanitizedName,
         subdomain: fullUrl,
         type,
         status: "PROVISIONING",
@@ -73,6 +90,7 @@ export const createStore = async (req: Request, res: Response) => {
         dbName,
         dbUser,
         dbPassword,
+        wpAdminPassword,
       },
     });
 
@@ -95,17 +113,18 @@ export const createStore = async (req: Request, res: Response) => {
 
         if (type === "WOOCOMMERCE") {
           await k8sService.installWooCommerce(
-            store.name,
+            sanitizedName,
             namespace,
-            name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${process.env.BASE_DOMAIN || "local.test"}`,
+            sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
             dbPassword,
-            dbRootPassword
+            dbRootPassword,
+            wpAdminPassword
           );
         } else if (type === "MEDUSA") {
           await k8sService.installMedusa(
-            store.name,
+            sanitizedName,
             namespace,
-            name.toLowerCase().replace(/[^a-z0-9]/g, "-") + `.${process.env.BASE_DOMAIN || "local.test"}`,
+            sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
             dbPassword
           );
         } else {
@@ -163,10 +182,15 @@ export const createStore = async (req: Request, res: Response) => {
 
         logger.info(`Store ${store.id} provisioned successfully in ${Date.now() - startTime}ms`);
       } catch (err) {
-        logger.error(`Failed to provision store ${store.id}`, err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to provision store ${store.id}:`, errorMessage);
+        
         await prisma.store.update({
           where: { id: store.id },
-          data: { status: "FAILED" },
+          data: { 
+            status: "FAILED",
+            errorMessage: errorMessage.substring(0, 500)
+          },
         });
 
         await auditService.log({
@@ -175,7 +199,7 @@ export const createStore = async (req: Request, res: Response) => {
           entity: "Store",
           userId,
           metadata: {
-            error: err instanceof Error ? err.message : String(err),
+            error: errorMessage,
             duration: Date.now() - startTime,
           },
         });

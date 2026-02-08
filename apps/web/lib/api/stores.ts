@@ -11,6 +11,8 @@ export interface Store {
   dbName?: string;
   dbUser?: string;
   dbPassword?: string;
+  wpAdminPassword?: string;
+  errorMessage?: string;
 }
 
 export interface PodStatus {

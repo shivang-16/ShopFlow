@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle2, Store as StoreIcon, Loader2, XCircle, Trash2, ExternalLink } from "lucide-react";
+import { CheckCircle2, Store as StoreIcon, Loader2, XCircle, Trash2, ExternalLink, KeyRound, Copy, Check } from "lucide-react";
 import { Store } from "../../../../lib/api/stores";
 import { toast } from "sonner";
+import { useState } from "react";
+import React from "react";
 
 interface StoreListProps {
   stores: Store[];
@@ -37,6 +39,9 @@ function getStatusBadge(status: Store["status"]) {
 }
 
 export function StoreList({ stores, loading, onDelete }: StoreListProps) {
+  const [showCredentials, setShowCredentials] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
       return;
@@ -45,9 +50,21 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
     toast.loading("Deleting store...");
     try {
       onDelete?.(id);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete store");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete store";
+      toast.error(message);
     }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success(`${field} copied to clipboard`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const getAdminUrl = (subdomain: string) => {
+    return `${subdomain}/wp-admin`;
   };
 
   return (
@@ -81,58 +98,157 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
             </tr>
           ) : (
             stores.map((store) => (
-              <tr key={store.id} className="hover:bg-teal-50/30 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
-                      <StoreIcon className="w-5 h-5 text-white" />
+              <React.Fragment key={store.id}>
+                <tr className="hover:bg-teal-50/30 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+                        <StoreIcon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{store.name}</p>
+                        <p className="text-xs text-gray-400 font-mono">{store.id.slice(0, 8)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{store.name}</p>
-                      <p className="text-xs text-gray-400 font-mono">{store.id.slice(0, 8)}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {store.type === "WOOCOMMERCE" ? "WooCommerce" : "Medusa"}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  {store.status === "READY" ? (
-                    <a
-                      href={store.subdomain}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1.5 group/link hover:underline"
-                    >
-                      <span>Visit Store</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  ) : (
-                    <span className="text-sm text-gray-400 font-medium">Provisioning...</span>
-                  )}
-                </td>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-semibold text-gray-700">
+                      {store.type === "WOOCOMMERCE" ? "WooCommerce" : "Medusa"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {store.status === "READY" ? (
+                      <a
+                        href={store.subdomain}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1.5 group/link hover:underline"
+                      >
+                        <span>Visit Store</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    ) : (
+                      <span className="text-sm text-gray-400 font-medium">Provisioning...</span>
+                    )}
+                  </td>
                 <td className="px-6 py-4">{getStatusBadge(store.status)}</td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-600">
-                    {new Date(store.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm text-gray-600">
+                      {new Date(store.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                    {store.status === "FAILED" && store.errorMessage && (
+                      <span className="text-xs text-red-600 font-medium" title={store.errorMessage}>
+                        {store.errorMessage.length > 50 ? store.errorMessage.substring(0, 50) + "..." : store.errorMessage}
+                      </span>
+                    )}
+                  </div>
                 </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => handleDelete(store.id, store.name)}
-                    className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg"
-                    title="Delete store"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {store.status === "READY" && (
+                        <button
+                          onClick={() => setShowCredentials(showCredentials === store.id ? null : store.id)}
+                          className="text-teal-600 hover:text-teal-700 transition-colors p-2 hover:bg-teal-50 rounded-lg"
+                          title="View credentials"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(store.id, store.name)}
+                        className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                        title="Delete store"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {showCredentials === store.id && store.status === "READY" && (
+                  <tr className="bg-teal-50/50 border-t border-teal-100">
+                    <td colSpan={6} className="px-6 py-4">
+                      <div className="bg-white rounded-xl p-6 border border-teal-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                          <KeyRound className="w-5 h-5 text-teal-600" />
+                          <h4 className="font-bold text-gray-900">Admin Credentials</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Admin URL</label>
+                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                              <a 
+                                href={getAdminUrl(store.subdomain)} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm text-teal-600 hover:text-teal-700 font-mono flex-1 hover:underline truncate"
+                              >
+                                {getAdminUrl(store.subdomain)}
+                              </a>
+                              <button
+                                onClick={() => copyToClipboard(getAdminUrl(store.subdomain), "Admin URL")}
+                                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                              >
+                                {copiedField === "Admin URL" ? (
+                                  <Check className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Username</label>
+                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                              <span className="text-sm text-gray-900 font-mono flex-1">admin</span>
+                              <button
+                                onClick={() => copyToClipboard("admin", "Username")}
+                                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                              >
+                                {copiedField === "Username" ? (
+                                  <Check className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
+                          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                            <span className="text-sm text-gray-900 font-mono flex-1">{store.wpAdminPassword || "Not available"}</span>
+                            <button
+                              onClick={() => copyToClipboard(store.wpAdminPassword || "", "Password")}
+                              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                              disabled={!store.wpAdminPassword}
+                            >
+                              {copiedField === "Password" ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                          <p className="text-xs text-blue-700">
+                            <strong>Note:</strong> Please change the default password after your first login for security.
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))
           )}
         </tbody>

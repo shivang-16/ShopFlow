@@ -67,7 +67,7 @@ spec:
                 --url="http://localhost" \
                 --title="ShopFlow Store" \
                 --admin_user="admin" \
-                --admin_password="StrongP@ssw0rd123!" \
+                --admin_password="{{ .Values.wordpress.adminPassword }}" \
                 --admin_email="admin@example.com" \
                 --path=/var/www/html \
                 --allow-root
@@ -85,15 +85,74 @@ spec:
             echo "Enabling Cash on Delivery..."
             wp option patch update woocommerce_cod_settings enabled yes --path=/var/www/html --allow-root || true
             
-            echo "Creating sample product..."
-            PRODUCT_ID=$(wp post create --post_type=product --post_title='Sample T-Shirt' --post_status=publish --path=/var/www/html --allow-root --porcelain)
-            wp post meta add $PRODUCT_ID _regular_price 29.99 --path=/var/www/html --allow-root
-            wp post meta add $PRODUCT_ID _price 29.99 --path=/var/www/html --allow-root
-            wp post meta add $PRODUCT_ID _manage_stock no --path=/var/www/html --allow-root
-            wp post meta add $PRODUCT_ID _stock_status instock --path=/var/www/html --allow-root
+            echo "Creating sample products..."
+            
+            # Product 1: Premium Wireless Headphones
+            PRODUCT_ID_1=$(wp post create --post_type=product --post_title='Premium Wireless Headphones' --post_status=publish --post_content='High-quality wireless headphones with noise cancellation, 30-hour battery life, and premium sound quality. Perfect for music lovers and professionals.' --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID_1 _regular_price 149.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_1 _price 149.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_1 _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_1 _stock_status instock --path=/var/www/html --allow-root
+            
+            # Product 2: Classic Cotton T-Shirt
+            PRODUCT_ID_2=$(wp post create --post_type=product --post_title='Classic Cotton T-Shirt' --post_status=publish --post_content='Comfortable 100% cotton t-shirt. Available in multiple colors. Perfect for everyday wear.' --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID_2 _regular_price 24.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_2 _price 24.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_2 _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_2 _stock_status instock --path=/var/www/html --allow-root
+            
+            # Product 3: Stainless Steel Water Bottle
+            PRODUCT_ID_3=$(wp post create --post_type=product --post_title='Stainless Steel Water Bottle' --post_status=publish --post_content='Eco-friendly insulated water bottle. Keeps drinks cold for 24 hours or hot for 12 hours. BPA-free and leak-proof.' --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID_3 _regular_price 34.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_3 _price 34.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_3 _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_3 _stock_status instock --path=/var/www/html --allow-root
+            
+            # Product 4: Professional Yoga Mat
+            PRODUCT_ID_4=$(wp post create --post_type=product --post_title='Professional Yoga Mat' --post_status=publish --post_content='Non-slip yoga mat with extra cushioning. Perfect for yoga, pilates, and floor exercises. Includes carrying strap.' --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID_4 _regular_price 49.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_4 _price 49.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_4 _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_4 _stock_status instock --path=/var/www/html --allow-root
+            
+            # Product 5: Smart Fitness Tracker
+            PRODUCT_ID_5=$(wp post create --post_type=product --post_title='Smart Fitness Tracker' --post_status=publish --post_content='Track your fitness goals with this smart fitness tracker. Features heart rate monitoring, step counting, and sleep tracking.' --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID_5 _regular_price 89.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_5 _price 89.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_5 _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID_5 _stock_status instock --path=/var/www/html --allow-root
+            
+            echo "Creating blog posts..."
+            
+            # Welcome post
+            wp post create \
+              --post_type=post \
+              --post_title='Welcome to Our Store!' \
+              --post_content='<p>We are excited to announce the launch of our new online store! Browse our carefully curated collection of high-quality products designed to enhance your lifestyle.</p><p>From premium electronics to everyday essentials, we have something for everyone. All products come with free shipping on orders over $50 and a 30-day money-back guarantee.</p><p>Thank you for choosing us as your trusted shopping destination!</p>' \
+              --post_status=publish \
+              --path=/var/www/html \
+              --allow-root
+            
+            # About the store post
+            wp post create \
+              --post_type=post \
+              --post_title='About Our Mission' \
+              --post_content='<p>At ShopFlow Store, our mission is to provide high-quality products at affordable prices. We believe in sustainable shopping and ethical sourcing.</p><p>Every product in our catalog is carefully selected to meet our strict quality standards. We partner with trusted manufacturers and suppliers to ensure you receive the best value.</p><p>Customer satisfaction is our top priority. Our dedicated support team is always here to help you with any questions or concerns.</p>' \
+              --post_status=publish \
+              --path=/var/www/html \
+              --allow-root
+            
+            # Special offers post
+            wp post create \
+              --post_type=post \
+              --post_title='Special Launch Offers' \
+              --post_content='<p>To celebrate our launch, we are offering special discounts on selected items!</p><ul><li>Free shipping on all orders over $50</li><li>10% off your first purchase with code: WELCOME10</li><li>Extended 60-day return policy for launch week</li></ul><p>These offers are available for a limited time only. Shop now and enjoy amazing savings!</p>' \
+              --post_status=publish \
+              --path=/var/www/html \
+              --allow-root
             
             echo "Setup complete! 🎉"
-            echo "Login: admin / StrongP@ssw0rd123!"
+            echo "Login: admin / {{ .Values.wordpress.adminPassword }}"
         env:
         - name: WORDPRESS_DB_HOST
           value: {{ .Release.Name }}-mariadb

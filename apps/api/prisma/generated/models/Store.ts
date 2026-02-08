@@ -34,6 +34,8 @@ export type StoreMinAggregateOutputType = {
   dbName: string | null
   dbUser: string | null
   dbPassword: string | null
+  wpAdminPassword: string | null
+  errorMessage: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -48,6 +50,8 @@ export type StoreMaxAggregateOutputType = {
   dbName: string | null
   dbUser: string | null
   dbPassword: string | null
+  wpAdminPassword: string | null
+  errorMessage: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +66,8 @@ export type StoreCountAggregateOutputType = {
   dbName: number
   dbUser: number
   dbPassword: number
+  wpAdminPassword: number
+  errorMessage: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +84,8 @@ export type StoreMinAggregateInputType = {
   dbName?: true
   dbUser?: true
   dbPassword?: true
+  wpAdminPassword?: true
+  errorMessage?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -92,6 +100,8 @@ export type StoreMaxAggregateInputType = {
   dbName?: true
   dbUser?: true
   dbPassword?: true
+  wpAdminPassword?: true
+  errorMessage?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +116,8 @@ export type StoreCountAggregateInputType = {
   dbName?: true
   dbUser?: true
   dbPassword?: true
+  wpAdminPassword?: true
+  errorMessage?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -193,6 +205,8 @@ export type StoreGroupByOutputType = {
   dbName: string | null
   dbUser: string | null
   dbPassword: string | null
+  wpAdminPassword: string | null
+  errorMessage: string | null
   createdAt: Date
   updatedAt: Date
   _count: StoreCountAggregateOutputType | null
@@ -228,6 +242,8 @@ export type StoreWhereInput = {
   dbName?: Prisma.StringNullableFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  wpAdminPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  errorMessage?: Prisma.StringNullableFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Store"> | Date | string
 }
@@ -242,6 +258,8 @@ export type StoreOrderByWithRelationInput = {
   dbName?: Prisma.SortOrderInput | Prisma.SortOrder
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  wpAdminPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -259,6 +277,8 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   dbName?: Prisma.StringNullableFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  wpAdminPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  errorMessage?: Prisma.StringNullableFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Store"> | Date | string
 }, "id" | "subdomain">
@@ -273,6 +293,8 @@ export type StoreOrderByWithAggregationInput = {
   dbName?: Prisma.SortOrderInput | Prisma.SortOrder
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  wpAdminPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.StoreCountOrderByAggregateInput
@@ -293,6 +315,8 @@ export type StoreScalarWhereWithAggregatesInput = {
   dbName?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbUser?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  wpAdminPassword?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  errorMessage?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Store"> | Date | string
 }
@@ -307,6 +331,8 @@ export type StoreCreateInput = {
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
+  wpAdminPassword?: string | null
+  errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -321,6 +347,8 @@ export type StoreUncheckedCreateInput = {
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
+  wpAdminPassword?: string | null
+  errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -335,6 +363,8 @@ export type StoreUpdateInput = {
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -349,6 +379,8 @@ export type StoreUncheckedUpdateInput = {
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -363,6 +395,8 @@ export type StoreCreateManyInput = {
   dbName?: string | null
   dbUser?: string | null
   dbPassword?: string | null
+  wpAdminPassword?: string | null
+  errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -377,6 +411,8 @@ export type StoreUpdateManyMutationInput = {
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -391,6 +427,8 @@ export type StoreUncheckedUpdateManyInput = {
   dbName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -405,6 +443,8 @@ export type StoreCountOrderByAggregateInput = {
   dbName?: Prisma.SortOrder
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
+  wpAdminPassword?: Prisma.SortOrder
+  errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -419,6 +459,8 @@ export type StoreMaxOrderByAggregateInput = {
   dbName?: Prisma.SortOrder
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
+  wpAdminPassword?: Prisma.SortOrder
+  errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -433,6 +475,8 @@ export type StoreMinOrderByAggregateInput = {
   dbName?: Prisma.SortOrder
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
+  wpAdminPassword?: Prisma.SortOrder
+  errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -469,6 +513,8 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   dbName?: boolean
   dbUser?: boolean
   dbPassword?: boolean
+  wpAdminPassword?: boolean
+  errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["store"]>
@@ -483,6 +529,8 @@ export type StoreSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   dbName?: boolean
   dbUser?: boolean
   dbPassword?: boolean
+  wpAdminPassword?: boolean
+  errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["store"]>
@@ -497,6 +545,8 @@ export type StoreSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   dbName?: boolean
   dbUser?: boolean
   dbPassword?: boolean
+  wpAdminPassword?: boolean
+  errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["store"]>
@@ -511,11 +561,13 @@ export type StoreSelectScalar = {
   dbName?: boolean
   dbUser?: boolean
   dbPassword?: boolean
+  wpAdminPassword?: boolean
+  errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subdomain" | "type" | "status" | "userId" | "dbName" | "dbUser" | "dbPassword" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
+export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subdomain" | "type" | "status" | "userId" | "dbName" | "dbUser" | "dbPassword" | "wpAdminPassword" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
 
 export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Store"
@@ -530,6 +582,8 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     dbName: string | null
     dbUser: string | null
     dbPassword: string | null
+    wpAdminPassword: string | null
+    errorMessage: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["store"]>
@@ -964,6 +1018,8 @@ export interface StoreFieldRefs {
   readonly dbName: Prisma.FieldRef<"Store", 'String'>
   readonly dbUser: Prisma.FieldRef<"Store", 'String'>
   readonly dbPassword: Prisma.FieldRef<"Store", 'String'>
+  readonly wpAdminPassword: Prisma.FieldRef<"Store", 'String'>
+  readonly errorMessage: Prisma.FieldRef<"Store", 'String'>
   readonly createdAt: Prisma.FieldRef<"Store", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Store", 'DateTime'>
 }
