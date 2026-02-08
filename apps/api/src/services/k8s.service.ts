@@ -148,15 +148,21 @@ class K8sService {
   }
 
   async getStoreStatus(namespace: string): Promise<StoreStatus> {
+    logger.info(`[K8S STATUS] Starting status check for namespace: ${namespace}`);
+    
     if (!this.k8sApi) {
+      logger.error(`[K8S STATUS] K8s API not available!`);
       return { status: "FAILED", pods: [], message: "K8s API not available" };
     }
 
     try {
+      logger.info(`[K8S STATUS] Fetching pods from namespace: ${namespace}`);
       const podsResponse = await this.k8sApi.listNamespacedPod({ namespace });
       const pods = podsResponse.items;
+      logger.info(`[K8S STATUS] Found ${pods.length} pods in namespace`);
 
       if (pods.length === 0) {
+        logger.warn(`[K8S STATUS] No pods found yet in namespace ${namespace}`);
         return { status: "PROVISIONING", pods: [], message: "No pods found yet" };
       }
 
@@ -173,6 +179,8 @@ class K8sService {
         };
       });
 
+      logger.info(`[K8S STATUS] Pod statuses: ${JSON.stringify(podStatuses)}`);
+
       const runningPods = podStatuses.filter(ps => ps.phase === "Running" || ps.phase === "Succeeded");
       const allRunning = pods.length > 0 && runningPods.length === pods.length;
       const allReady = runningPods.length > 0 && runningPods.every(ps => 
@@ -180,22 +188,28 @@ class K8sService {
       );
       const anyFailed = podStatuses.some(ps => ps.phase === "Failed" || ps.restarts > 10);
 
+      logger.info(`[K8S STATUS] Analysis - allRunning: ${allRunning}, allReady: ${allReady}, anyFailed: ${anyFailed}`);
+
       if (anyFailed) {
+        logger.warn(`[K8S STATUS] ❌ FAILED - One or more pods failed`);
         return { status: "FAILED", pods: podStatuses, message: "One or more pods failed" };
       }
 
       if (allReady) {
+        logger.info(`[K8S STATUS] ✅ READY - All pods ready (readiness passed)`);
         return { status: "READY", pods: podStatuses, message: "All pods ready" };
       }
 
       // Fallback: if all pods are running (even if readiness probe hasn't passed yet)
       if (allRunning) {
+        logger.info(`[K8S STATUS] ✅ READY - All pods running (readiness pending)`);
         return { status: "READY", pods: podStatuses, message: "All pods running (readiness pending)" };
       }
 
+      logger.info(`[K8S STATUS] ⏳ PROVISIONING - Waiting for pods`);
       return { status: "PROVISIONING", pods: podStatuses, message: "Waiting for pods" };
     } catch (err: any) {
-      logger.error(`Error getting store status for ${namespace}:`, err);
+      logger.error(`[K8S STATUS] ❌ Error getting store status for ${namespace}:`, err);
       return { status: "FAILED", pods: [], message: err.message };
     }
   }

@@ -24,11 +24,11 @@ spec:
         imagePullPolicy: {{ .Values.medusa.image.pullPolicy }}
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "50m"
+            memory: "128Mi"
+            cpu: "25m"
           limits:
-            memory: "512Mi"
-            cpu: "200m"
+            memory: "256Mi"
+            cpu: "100m"
         workingDir: /app/medusa-store
         command: ["/bin/sh", "-c"]
         args:

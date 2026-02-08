@@ -264,31 +264,50 @@ export const getStore = async (req: Request, res: Response) => {
 export const getStoreStatus = async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
 
+  logger.info(`[STATUS CHECK START] Checking status for store ${id}`);
+
   try {
     const store = await prisma.store.findUnique({ where: { id } });
     if (!store) {
+      logger.warn(`[STATUS CHECK] Store ${id} not found`);
       return res.status(404).json({ error: "Store not found" });
     }
 
+    logger.info(`[STATUS CHECK] Store ${id} found - Current DB status: ${store.status}, Type: ${store.type}`);
+
     const namespace = `store-${store.id}`;
+    logger.info(`[STATUS CHECK] Checking K8s status for namespace: ${namespace}`);
+    
     const k8sStatus = await k8sService.getStoreStatus(namespace);
+    logger.info(`[STATUS CHECK] K8s status received: ${JSON.stringify(k8sStatus)}`);
 
     // Auto-update store status in DB if K8s says it's ready but DB says provisioning
     if (k8sStatus.status === "READY" && store.status === "PROVISIONING") {
-      await prisma.store.update({
-        where: { id },
-        data: { status: "READY" }
-      });
-      logger.info(`Auto-updated store ${id} status to READY`);
+      logger.info(`[STATUS CHECK] ⚠️  MISMATCH DETECTED! K8s=READY but DB=PROVISIONING. Updating DB...`);
+      
+      try {
+        await prisma.store.update({
+          where: { id },
+          data: { status: "READY" }
+        });
+        logger.info(`[STATUS CHECK] ✅ Successfully updated store ${id} status to READY in database`);
+      } catch (updateError) {
+        logger.error(`[STATUS CHECK] ❌ Failed to update store ${id} status:`, updateError);
+      }
+    } else {
+      logger.info(`[STATUS CHECK] No update needed - K8s: ${k8sStatus.status}, DB: ${store.status}`);
     }
+
+    const finalStatus = k8sStatus.status === "READY" ? "READY" : store.status;
+    logger.info(`[STATUS CHECK END] Returning status: ${finalStatus} for store ${id}`);
 
     res.json({
       id: store.id,
-      status: k8sStatus.status === "READY" ? "READY" : store.status,
+      status: finalStatus,
       k8sStatus,
     });
   } catch (error) {
-    logger.error("Get store status API error", error);
+    logger.error(`[STATUS CHECK ERROR] Error checking status for store ${id}:`, error);
     res.status(500).json({ error: "Failed to get store status" });
   }
 };
