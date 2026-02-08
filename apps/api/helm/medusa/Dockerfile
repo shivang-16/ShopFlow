@@ -17,8 +17,9 @@ RUN npx medusa build > build_log.txt 2>&1 || (cat build_log.txt && exit 1)
 RUN cat build_log.txt
 RUN echo "Checking build directory..."
 RUN ls -la
-RUN ls -la build || echo "No build directory found"
-RUN ls -la .cache || echo "No .cache directory found"
+RUN ls -la .medusa || echo "No .medusa directory"
+RUN ls -la .medusa/admin || echo "No .medusa/admin directory"
+RUN find .medusa -name "index.html" || echo "No index.html found in .medusa"
 
 # Force cache bust
 RUN echo "Build complete at $(date)" > /build_timestamp.txt
