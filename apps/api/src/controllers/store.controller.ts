@@ -273,9 +273,18 @@ export const getStoreStatus = async (req: Request, res: Response) => {
     const namespace = `store-${store.id}`;
     const k8sStatus = await k8sService.getStoreStatus(namespace);
 
+    // Auto-update store status in DB if K8s says it's ready but DB says provisioning
+    if (k8sStatus.status === "READY" && store.status === "PROVISIONING") {
+      await prisma.store.update({
+        where: { id },
+        data: { status: "READY" }
+      });
+      logger.info(`Auto-updated store ${id} status to READY`);
+    }
+
     res.json({
       id: store.id,
-      status: store.status,
+      status: k8sStatus.status === "READY" ? "READY" : store.status,
       k8sStatus,
     });
   } catch (error) {
