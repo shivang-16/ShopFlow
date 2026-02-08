@@ -1,7 +1,7 @@
 wordpress:
   image:
     repository: wordpress
-    tag: 6.4-php8.1-apache
+    tag: 6.8-php8.1-apache
     pullPolicy: IfNotPresent
   
   resources:
