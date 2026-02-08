@@ -4,8 +4,8 @@ import { k8sService } from "../services/k8s.service";
 import { auditService } from "../services/audit.service";
 import { logger } from "../logger";
 
-const MAX_STORES_PER_USER = 5;
-const PROVISIONING_TIMEOUT = 600000;
+const MAX_STORES_PER_USER = 10;
+const PROVISIONING_TIMEOUT = 60000;
 
 function sanitizeStoreName(name: string): string {
   return name
@@ -58,9 +58,21 @@ export const createStore = async (req: Request, res: Response) => {
   }
 
   try {
+    // Check per-user store quota
     const userStoreCount = await prisma.store.count({
       where: { userId, status: { not: "FAILED" } },
     });
+
+    if (userStoreCount >= MAX_STORES_PER_USER) {
+      logger.warn(`Store creation failed: User ${userId} exceeded quota (${userStoreCount}/${MAX_STORES_PER_USER})`);
+      return res.status(429).json({ 
+        error: "Store quota exceeded",
+        message: `You can create a maximum of ${MAX_STORES_PER_USER} stores. Delete existing stores to create new ones.`,
+        current: userStoreCount,
+        max: MAX_STORES_PER_USER
+      });
+    }
+
     const baseDomain = process.env.BASE_DOMAIN || "local.test";
     const ingressPort = process.env.INGRESS_HTTP_PORT || "";
     const subdomain = sanitizedName + `.${baseDomain}`;

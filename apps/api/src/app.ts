@@ -4,17 +4,20 @@ import dotenv from "dotenv";
 import { clerkMiddleware } from "@clerk/express";
 import { logger } from "./logger";
 import routes from "./routes";
+import { globalLimiter, perUserPerApiLimiter } from "./middlewares/rate-limit.middleware";
+import expressWinston from "express-winston";
 
 dotenv.config();
 
 const app: Express = express();
 
-import expressWinston from "express-winston";
-
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL || "http://localhost:3000",
-  "https://your-shopflow-app.vercel.app", // Add your Vercel URL here
+  "https://shop-flow-web.vercel.app",
+  "https://shop-flow-web-olive.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
 ];
 
 app.use(cors({
@@ -46,6 +49,12 @@ app.use(expressWinston.logger({
 
 // Clerk Middleware - adds auth context to all requests
 app.use(clerkMiddleware());
+
+// Global Rate Limiting - prevents IP-based abuse (100 req/min per IP)
+app.use(globalLimiter);
+
+// Per-user Per-API Rate Limiting - tracks each user per endpoint (20 req/min)
+app.use("/api", perUserPerApiLimiter);
 
 // Health Check
 app.get("/", (req: Request, res: Response) => {
