@@ -6,11 +6,11 @@ medusa:
   
   resources:
     requests:
-      memory: "1Gi"
-      cpu: "500m"
+      memory: "768Mi"
+      cpu: "300m"
     limits:
-      memory: "2Gi"
-      cpu: "2000m"
+      memory: "1.5Gi"
+      cpu: "800m"
   
   service:
     type: NodePort
@@ -47,10 +47,10 @@ ingress:
 resourceQuota:
   enabled: true
   hard:
-    requests.cpu: "1"
-    requests.memory: "2Gi"
-    limits.cpu: "3"
-    limits.memory: "4Gi"
+    requests.cpu: "800m"
+    requests.memory: "1.5Gi"
+    limits.cpu: "1.5"
+    limits.memory: "3Gi"
     persistentvolumeclaims: "2"
 
 networkPolicy:

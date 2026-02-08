@@ -194,19 +194,32 @@ class K8sService {
     }
   }
 
-  async getStoreNodePort(storeName: string, namespace: string): Promise<number | null> {
+  async getStoreNodePort(storeName: string, namespace: string, storeType?: string): Promise<number | null> {
     if (!this.k8sApi) {
       return null;
     }
 
     try {
-      const serviceName = `${storeName}-wordpress`;
-      const serviceResponse = await this.k8sApi.readNamespacedService({ name: serviceName, namespace });
-      const service = serviceResponse;
+      // Try both possible service names
+      const serviceNames = [
+        `${storeName}-wordpress`,
+        `${storeName}-medusa`
+      ];
       
-      if (service.spec?.type === "NodePort" && service.spec.ports && service.spec.ports.length > 0) {
-        return service.spec.ports[0].nodePort || null;
+      for (const serviceName of serviceNames) {
+        try {
+          const serviceResponse = await this.k8sApi.readNamespacedService({ name: serviceName, namespace });
+          const service = serviceResponse;
+          
+          if (service.spec?.type === "NodePort" && service.spec.ports && service.spec.ports.length > 0) {
+            return service.spec.ports[0].nodePort || null;
+          }
+        } catch (err: any) {
+          // Service not found, try next one
+          continue;
+        }
       }
+      
       return null;
     } catch (err: any) {
       logger.error(`Error getting NodePort for ${storeName}:`, err);

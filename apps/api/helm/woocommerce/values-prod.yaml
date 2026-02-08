@@ -57,11 +57,11 @@ mariadb:
   
   resources:
     requests:
-      memory: "512Mi"
-      cpu: "250m"
+      memory: "384Mi"
+      cpu: "200m"
     limits:
-      memory: "1Gi"
-      cpu: "1000m"
+      memory: "768Mi"
+      cpu: "600m"
   
   persistence:
     enabled: true
@@ -116,10 +116,10 @@ ingress:
 resourceQuota:
   enabled: true
   hard:
-    requests.cpu: "2"
-    requests.memory: "4Gi"
-    limits.cpu: "4"
-    limits.memory: "8Gi"
+    requests.cpu: "1"
+    requests.memory: "2Gi"
+    limits.cpu: "2"
+    limits.memory: "4Gi"
     persistentvolumeclaims: "10"
 
 networkPolicy:
