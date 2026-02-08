@@ -61,6 +61,22 @@ spec:
             
             if [ -n "$TOKEN" ]; then
               echo "Successfully authenticated! Token obtained."
+              
+              # Create Publishable API Key for Store API
+              echo "Creating Publishable API Key for Store API..."
+              PUB_KEY=$(curl -sf -X POST http://{{ include "medusa.fullname" . }}:9000/admin/publishable-api-keys \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $TOKEN" \
+                -d '{"title":"Store Frontend Key"}' \
+                2>/dev/null | grep -o '"id":"pk_[^"]*' | cut -d'"' -f4)
+              
+              if [ -n "$PUB_KEY" ]; then
+                echo "✅ Publishable API Key created: $PUB_KEY"
+                echo "   Use this key with: x-publishable-api-key: $PUB_KEY"
+              else
+                echo "⚠️  Could not create publishable API key"
+              fi
+              
               echo "Creating additional products..."
               
               # Create T-Shirt
@@ -147,18 +163,34 @@ spec:
                 }' || echo "Product creation failed"
               
               echo "✅ Products created successfully!"
+              
+              echo ""
+              echo "================================================"
+              echo "✅ Medusa setup completed!"
+              echo "================================================"
+              echo "Admin Login:"
+              echo "  Email: {{ .Values.medusa.adminEmail }}"
+              echo "  Password: {{ .Values.medusa.adminPassword }}"
+              echo ""
+              echo "Publishable API Key:"
+              echo "  Key: $PUB_KEY"
+              echo "  Usage: Add header 'x-publishable-api-key: $PUB_KEY'"
+              echo ""
+              echo "Store API Examples:"
+              echo "  Products: GET /store/products"
+              echo "  Collections: GET /store/collections"
+              echo "================================================"
             else
-              echo "⚠️  Could not authenticate. Products not created."
+              echo "⚠️  Could not authenticate. Products and API key not created."
+              echo ""
+              echo "================================================"
+              echo "✅ Medusa setup completed (partial)!"
+              echo "================================================"
+              echo "Admin Login:"
+              echo "  Email: {{ .Values.medusa.adminEmail }}"
+              echo "  Password: {{ .Values.medusa.adminPassword }}"
+              echo "================================================"
             fi
-            
-            echo ""
-            echo "================================================"
-            echo "✅ Medusa setup completed!"
-            echo "================================================"
-            echo "Admin Login:"
-            echo "  Email: {{ .Values.medusa.adminEmail }}"
-            echo "  Password: {{ .Values.medusa.adminPassword }}"
-            echo "================================================"
         env:
         {{- range $key, $value := .Values.medusa.env }}
         - name: {{ $key }}
