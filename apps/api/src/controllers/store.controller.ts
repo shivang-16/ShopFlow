@@ -163,7 +163,12 @@ export const createStore = async (req: Request, res: Response) => {
 
         // Update WordPress site URL to the actual NodePort URL
         if (nodePort && type === "WOOCOMMERCE") {
-          await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, storeUrl);
+          try {
+            await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, storeUrl);
+          } catch (urlUpdateError) {
+            logger.warn(`Failed to auto-update WordPress URL, user will need to do it manually:`, urlUpdateError);
+            // Don't fail the whole provisioning just because URL update failed
+          }
         }
 
         await prisma.store.update({

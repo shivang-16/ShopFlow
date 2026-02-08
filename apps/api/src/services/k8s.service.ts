@@ -295,33 +295,81 @@ class K8sService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    const overrides = {
-      spec: {
-        securityContext: { runAsUser: 0, runAsGroup: 0 },
-        containers: [{
-          name: "wp-update",
-          image: "wordpress:cli-php8.1",
-          stdin: true,
-          command: ["/bin/sh", "-c"],
-          args: [`wp option update home "${siteUrl}" --path=/var/www/html --allow-root && wp option update siteurl "${siteUrl}" --path=/var/www/html --allow-root`],
-          volumeMounts: [{ name: "wordpress-data", mountPath: "/var/www/html" }],
-          env: [
-            { name: "WORDPRESS_DB_HOST", value: `${sanitizedReleaseName}-mariadb` },
-            { name: "WORDPRESS_DB_NAME", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-database" } } },
-            { name: "WORDPRESS_DB_USER", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-user" } } },
-            { name: "WORDPRESS_DB_PASSWORD", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-password" } } }
-          ]
-        }],
-        volumes: [{ name: "wordpress-data", persistentVolumeClaim: { claimName: `${sanitizedReleaseName}-wordpress-pvc` } }]
-      }
-    };
-
-    const command = `kubectl run wp-update-url --image=wordpress:cli-php8.1 --rm -i --restart=Never --namespace=${namespace} --overrides='${JSON.stringify(overrides)}'`;
+    const jobName = `wp-url-update-${Date.now()}`;
+    const jobYaml = `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${jobName}
+  namespace: ${namespace}
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 2
+  template:
+    spec:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      restartPolicy: Never
+      containers:
+      - name: wp-update
+        image: wordpress:cli-php8.1
+        command:
+        - /bin/sh
+        - -c
+        - |
+          wp option update home "${siteUrl}" --path=/var/www/html --allow-root
+          wp option update siteurl "${siteUrl}" --path=/var/www/html --allow-root
+          echo "WordPress URLs updated successfully"
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: ${sanitizedReleaseName}-mariadb
+        - name: WORDPRESS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ${sanitizedReleaseName}-db-secret
+              key: mariadb-database
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: ${sanitizedReleaseName}-db-secret
+              key: mariadb-user
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${sanitizedReleaseName}-db-secret
+              key: mariadb-password
+        volumeMounts:
+        - name: wordpress-data
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-data
+        persistentVolumeClaim:
+          claimName: ${sanitizedReleaseName}-wordpress-pvc
+`;
 
     try {
       logger.info(`Updating WordPress site URL to: ${siteUrl}`);
-      await execAsync(command);
-      logger.info(`WordPress site URL updated successfully`);
+      
+      // Write job YAML to temp file
+      const tempFile = `/tmp/${jobName}.yaml`;
+      await execAsync(`cat > ${tempFile} << 'EOF'\n${jobYaml}\nEOF`);
+      
+      // Apply the job
+      await execAsync(`kubectl apply -f ${tempFile}`);
+      
+      // Wait for job to complete (max 60 seconds)
+      for (let i = 0; i < 30; i++) {
+        const result = await execAsync(`kubectl get job ${jobName} -n ${namespace} -o jsonpath='{.status.succeeded}'`);
+        if (result.stdout.trim() === '1') {
+          logger.info(`WordPress site URL updated successfully`);
+          await execAsync(`rm -f ${tempFile}`);
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      throw new Error("Job did not complete in time");
     } catch (err: any) {
       logger.error(`Error updating WordPress site URL:`, err);
       throw err;
