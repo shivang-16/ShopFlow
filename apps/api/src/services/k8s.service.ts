@@ -1,4 +1,4 @@
-import { KubeConfig, CoreV1Api, AppsV1Api, V1Pod } from "@kubernetes/client-node";
+import { KubeConfig, CoreV1Api, AppsV1Api, BatchV1Api, V1Pod } from "@kubernetes/client-node";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
@@ -24,13 +24,14 @@ interface PodStatus {
 class K8sService {
   private k8sApi: CoreV1Api | null = null;
   private appsApi: AppsV1Api | null = null;
+  private k8sConfig: KubeConfig;
 
   constructor() {
+    this.k8sConfig = new KubeConfig();
     try {
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
-      this.k8sApi = kc.makeApiClient(CoreV1Api);
-      this.appsApi = kc.makeApiClient(AppsV1Api);
+      this.k8sConfig.loadFromDefault();
+      this.k8sApi = this.k8sConfig.makeApiClient(CoreV1Api);
+      this.appsApi = this.k8sConfig.makeApiClient(AppsV1Api);
     } catch (error) {
       logger.warn("Failed to load Kubernetes config. K8s features will be disabled.", error);
     }
@@ -289,6 +290,10 @@ class K8sService {
   }
 
   async updateWordPressSiteUrl(namespace: string, releaseName: string, siteUrl: string): Promise<void> {
+    if (!this.k8sApi) {
+      throw new Error("Kubernetes API not available");
+    }
+
     const sanitizedReleaseName = releaseName
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
@@ -296,80 +301,108 @@ class K8sService {
       .replace(/^-|-$/g, '');
 
     const jobName = `wp-url-update-${Date.now()}`;
-    const jobYaml = `
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: ${jobName}
-  namespace: ${namespace}
-spec:
-  ttlSecondsAfterFinished: 60
-  backoffLimit: 2
-  template:
-    spec:
-      securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-      restartPolicy: Never
-      containers:
-      - name: wp-update
-        image: wordpress:cli-php8.1
-        command:
-        - /bin/sh
-        - -c
-        - |
-          wp option update home "${siteUrl}" --path=/var/www/html --allow-root
-          wp option update siteurl "${siteUrl}" --path=/var/www/html --allow-root
-          echo "WordPress URLs updated successfully"
-        env:
-        - name: WORDPRESS_DB_HOST
-          value: ${sanitizedReleaseName}-mariadb
-        - name: WORDPRESS_DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: ${sanitizedReleaseName}-db-secret
-              key: mariadb-database
-        - name: WORDPRESS_DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: ${sanitizedReleaseName}-db-secret
-              key: mariadb-user
-        - name: WORDPRESS_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ${sanitizedReleaseName}-db-secret
-              key: mariadb-password
-        volumeMounts:
-        - name: wordpress-data
-          mountPath: /var/www/html
-      volumes:
-      - name: wordpress-data
-        persistentVolumeClaim:
-          claimName: ${sanitizedReleaseName}-wordpress-pvc
-`;
+
+    const jobSpec = {
+      apiVersion: 'batch/v1',
+      kind: 'Job',
+      metadata: {
+        name: jobName,
+        namespace: namespace,
+      },
+      spec: {
+        ttlSecondsAfterFinished: 60,
+        backoffLimit: 2,
+        template: {
+          spec: {
+            securityContext: {
+              runAsUser: 0,
+              runAsGroup: 0,
+            },
+            restartPolicy: 'Never',
+            containers: [
+              {
+                name: 'wp-update',
+                image: 'wordpress:cli-php8.1',
+                command: ['/bin/sh', '-c'],
+                args: [
+                  `wp option update home "${siteUrl}" --path=/var/www/html --allow-root && wp option update siteurl "${siteUrl}" --path=/var/www/html --allow-root && echo "WordPress URLs updated successfully"`
+                ],
+                env: [
+                  { name: 'WORDPRESS_DB_HOST', value: `${sanitizedReleaseName}-mariadb` },
+                  {
+                    name: 'WORDPRESS_DB_NAME',
+                    valueFrom: {
+                      secretKeyRef: {
+                        name: `${sanitizedReleaseName}-db-secret`,
+                        key: 'mariadb-database',
+                      },
+                    },
+                  },
+                  {
+                    name: 'WORDPRESS_DB_USER',
+                    valueFrom: {
+                      secretKeyRef: {
+                        name: `${sanitizedReleaseName}-db-secret`,
+                        key: 'mariadb-user',
+                      },
+                    },
+                  },
+                  {
+                    name: 'WORDPRESS_DB_PASSWORD',
+                    valueFrom: {
+                      secretKeyRef: {
+                        name: `${sanitizedReleaseName}-db-secret`,
+                        key: 'mariadb-password',
+                      },
+                    },
+                  },
+                ],
+                volumeMounts: [
+                  {
+                    name: 'wordpress-data',
+                    mountPath: '/var/www/html',
+                  },
+                ],
+              },
+            ],
+            volumes: [
+              {
+                name: 'wordpress-data',
+                persistentVolumeClaim: {
+                  claimName: `${sanitizedReleaseName}-wordpress-pvc`,
+                },
+              },
+            ],
+          },
+        },
+      },
+    };
 
     try {
       logger.info(`Updating WordPress site URL to: ${siteUrl}`);
-      
-      // Write job YAML to temp file
-      const tempFile = `/tmp/${jobName}.yaml`;
-      await execAsync(`cat > ${tempFile} << 'EOF'\n${jobYaml}\nEOF`);
-      
-      // Apply the job
-      await execAsync(`kubectl apply -f ${tempFile}`);
-      
-      // Wait for job to complete (max 60 seconds)
+
+      const batchClient = this.k8sConfig.makeApiClient(BatchV1Api);
+
+      await batchClient.createNamespacedJob({ namespace, body: jobSpec as any });
+
       for (let i = 0; i < 30; i++) {
-        const result = await execAsync(`kubectl get job ${jobName} -n ${namespace} -o jsonpath='{.status.succeeded}'`);
-        if (result.stdout.trim() === '1') {
-          logger.info(`WordPress site URL updated successfully`);
-          await execAsync(`rm -f ${tempFile}`);
-          return;
-        }
         await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+          const jobStatus = await batchClient.readNamespacedJobStatus({ name: jobName, namespace });
+          if (jobStatus.status?.succeeded && jobStatus.status.succeeded > 0) {
+            logger.info(`WordPress site URL updated successfully`);
+            return;
+          }
+          if (jobStatus.status?.failed && jobStatus.status.failed > 2) {
+            throw new Error("Job failed after multiple attempts");
+          }
+        } catch (err: any) {
+          if (i === 29) throw err;
+        }
       }
-      
-      throw new Error("Job did not complete in time");
+
+      logger.warn("Job did not complete in time, but store is still usable");
     } catch (err: any) {
       logger.error(`Error updating WordPress site URL:`, err);
       throw err;
