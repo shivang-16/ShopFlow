@@ -10,7 +10,15 @@ RUN medusa new medusa-store --skip-db --skip-env --skip-migrations
 
 WORKDIR /app/medusa-store
 
-RUN npx medusa build
+RUN npx medusa build > build_log.txt 2>&1 || (cat build_log.txt && exit 1)
+RUN cat build_log.txt
+RUN echo "Checking build directory..."
+RUN ls -la
+RUN ls -la build || echo "No build directory found"
+RUN ls -la .cache || echo "No .cache directory found"
+
+# Force cache bust
+RUN echo "Build complete at $(date)" > /build_timestamp.txt
 
 EXPOSE 9000
 
