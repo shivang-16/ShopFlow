@@ -35,6 +35,14 @@ spec:
           value: {{ .Values.medusa.env.ADMIN_CORS | quote }}
         - name: STORE_CORS
           value: {{ .Values.medusa.env.STORE_CORS | quote }}
+        {{- if .Values.medusa.env.DANGEROUSLY_DISABLE_HOST_CHECK }}
+        - name: DANGEROUSLY_DISABLE_HOST_CHECK
+          value: {{ .Values.medusa.env.DANGEROUSLY_DISABLE_HOST_CHECK | quote }}
+        {{- end }}
+        - name: MEDUSA_ADMIN_ONBOARDING_TYPE
+          value: "default"
+        - name: MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY
+          value: ""
         - name: JWT_SECRET
           value: "some-jwt-secret-change-me"
         - name: COOKIE_SECRET

@@ -24,8 +24,6 @@ medusa:
     NODE_ENV: "development"
     ADMIN_CORS: "*"
     STORE_CORS: "*"
-    DATABASE_URL: ""
-    REDIS_URL: ""
     DANGEROUSLY_DISABLE_HOST_CHECK: "true"
   
   readinessProbe:

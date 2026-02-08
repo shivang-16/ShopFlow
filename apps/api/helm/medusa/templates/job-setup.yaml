@@ -9,8 +9,10 @@ metadata:
     "helm.sh/hook": post-install
     "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-timeout": "600s"
 spec:
   backoffLimit: 3
+  activeDeadlineSeconds: 600
   template:
     metadata:
       labels:
