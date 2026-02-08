@@ -15,7 +15,7 @@ medusa:
   service:
     type: NodePort
     port: 9000
-    nodePort: 31900
+    nodePort: null
   
   env:
     NODE_ENV: "development"
@@ -64,7 +64,7 @@ resourceQuota:
     requests.memory: "1Gi"
     limits.cpu: "2"
     limits.memory: "2Gi"
-    persistentvolumeclaims: "0"
+    persistentvolumeclaims: "2"
 
 networkPolicy:
   enabled: true
