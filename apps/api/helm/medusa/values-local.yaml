@@ -21,6 +21,8 @@ medusa:
     NODE_ENV: "development"
     ADMIN_CORS: "*"
     STORE_CORS: "*"
+    DATABASE_URL: ""
+    REDIS_URL: ""
   
   readinessProbe:
     enabled: true
@@ -43,97 +45,6 @@ medusa:
     timeoutSeconds: 5
     failureThreshold: 3
 
-postgresql:
-  image:
-    repository: postgres
-    tag: 14-alpine
-    pullPolicy: IfNotPresent
-  
-  auth:
-    database: medusa
-    username: medusa
-    password: medusapassword
-  
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  
-  persistence:
-    enabled: true
-    size: 5Gi
-    storageClass: "standard"
-  
-  securityContext:
-    runAsUser: 999
-    runAsGroup: 999
-    fsGroup: 999
-  
-  readinessProbe:
-    enabled: true
-    exec:
-      command:
-        - /bin/sh
-        - -c
-        - pg_isready -U medusa
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
-  
-  livenessProbe:
-    enabled: true
-    exec:
-      command:
-        - /bin/sh
-        - -c
-        - pg_isready -U medusa
-    initialDelaySeconds: 60
-    periodSeconds: 20
-    timeoutSeconds: 5
-    failureThreshold: 3
-
-redis:
-  image:
-    repository: redis
-    tag: 7-alpine
-    pullPolicy: IfNotPresent
-  
-  resources:
-    requests:
-      memory: "128Mi"
-      cpu: "50m"
-    limits:
-      memory: "256Mi"
-      cpu: "200m"
-  
-  readinessProbe:
-    enabled: true
-    exec:
-      command:
-        - redis-cli
-        - ping
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 3
-    successThreshold: 1
-    failureThreshold: 3
-  
-  livenessProbe:
-    enabled: true
-    exec:
-      command:
-        - redis-cli
-        - ping
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 3
-    failureThreshold: 3
-
 ingress:
   enabled: true
   className: "nginx"
@@ -149,11 +60,11 @@ ingress:
 resourceQuota:
   enabled: true
   hard:
-    requests.cpu: "1"
-    requests.memory: "2Gi"
+    requests.cpu: "500m"
+    requests.memory: "1Gi"
     limits.cpu: "2"
-    limits.memory: "4Gi"
-    persistentvolumeclaims: "5"
+    limits.memory: "2Gi"
+    persistentvolumeclaims: "0"
 
 networkPolicy:
   enabled: true

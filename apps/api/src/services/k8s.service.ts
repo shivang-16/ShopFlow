@@ -475,7 +475,8 @@ class K8sService {
     releaseName: string,
     namespace: string,
     domain: string,
-    dbPassword?: string
+    databaseUrl?: string,
+    redisUrl?: string
   ) {
     const chartPath = path.resolve(__dirname, "../../helm/medusa");
 
@@ -488,7 +489,8 @@ class K8sService {
       logger.info(`Helm release ${releaseName} already exists, upgrading`);
     }
 
-    const dbPass = dbPassword || this.generateSecurePassword();
+    const dbUrl = databaseUrl || process.env.DATABASE_URL || "";
+    const rUrl = redisUrl || process.env.REDIS_URL || "";
 
     const sanitizedReleaseName = releaseName
       .toLowerCase()
@@ -502,7 +504,8 @@ class K8sService {
     const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
       --set ingress.host=${domain} \
-      --set postgresql.auth.password=${dbPass} \
+      --set medusa.env.DATABASE_URL="${dbUrl}" \
+      --set medusa.env.REDIS_URL="${rUrl}" \
       --values "${chartPath}/${valuesFile}" \
       --wait --timeout 10m`;
 
@@ -512,7 +515,7 @@ class K8sService {
       const { stdout, stderr } = await execAsync(command);
       logger.info(`Helm install output: ${stdout}`);
       if (stderr) logger.warn(`Helm stderr: ${stderr}`);
-      return { success: true, dbPassword: dbPass };
+      return { success: true };
     } catch (error: any) {
       logger.error(`Helm install failed:`, error);
       throw error;

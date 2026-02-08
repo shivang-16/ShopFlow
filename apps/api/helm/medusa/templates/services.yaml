@@ -16,35 +16,3 @@ spec:
     {{- end }}
   selector:
     app: {{ .Release.Name }}-medusa
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Release.Name }}-postgresql
-  labels:
-    app: {{ .Release.Name }}-postgresql
-spec:
-  type: ClusterIP
-  ports:
-  - port: 5432
-    targetPort: postgresql
-    protocol: TCP
-    name: postgresql
-  selector:
-    app: {{ .Release.Name }}-postgresql
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Release.Name }}-redis
-  labels:
-    app: {{ .Release.Name }}-redis
-spec:
-  type: ClusterIP
-  ports:
-  - port: 6379
-    targetPort: redis
-    protocol: TCP
-    name: redis
-  selector:
-    app: {{ .Release.Name }}-redis
