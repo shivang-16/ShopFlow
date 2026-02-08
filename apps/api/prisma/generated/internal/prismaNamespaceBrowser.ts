@@ -83,6 +83,8 @@ export const StoreScalarFieldEnum = {
   dbUser: 'dbUser',
   dbPassword: 'dbPassword',
   wpAdminPassword: 'wpAdminPassword',
+  adminEmail: 'adminEmail',
+  publishableApiKey: 'publishableApiKey',
   errorMessage: 'errorMessage',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

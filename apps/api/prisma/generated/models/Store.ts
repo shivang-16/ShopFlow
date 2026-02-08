@@ -35,6 +35,8 @@ export type StoreMinAggregateOutputType = {
   dbUser: string | null
   dbPassword: string | null
   wpAdminPassword: string | null
+  adminEmail: string | null
+  publishableApiKey: string | null
   errorMessage: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,6 +53,8 @@ export type StoreMaxAggregateOutputType = {
   dbUser: string | null
   dbPassword: string | null
   wpAdminPassword: string | null
+  adminEmail: string | null
+  publishableApiKey: string | null
   errorMessage: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -67,6 +71,8 @@ export type StoreCountAggregateOutputType = {
   dbUser: number
   dbPassword: number
   wpAdminPassword: number
+  adminEmail: number
+  publishableApiKey: number
   errorMessage: number
   createdAt: number
   updatedAt: number
@@ -85,6 +91,8 @@ export type StoreMinAggregateInputType = {
   dbUser?: true
   dbPassword?: true
   wpAdminPassword?: true
+  adminEmail?: true
+  publishableApiKey?: true
   errorMessage?: true
   createdAt?: true
   updatedAt?: true
@@ -101,6 +109,8 @@ export type StoreMaxAggregateInputType = {
   dbUser?: true
   dbPassword?: true
   wpAdminPassword?: true
+  adminEmail?: true
+  publishableApiKey?: true
   errorMessage?: true
   createdAt?: true
   updatedAt?: true
@@ -117,6 +127,8 @@ export type StoreCountAggregateInputType = {
   dbUser?: true
   dbPassword?: true
   wpAdminPassword?: true
+  adminEmail?: true
+  publishableApiKey?: true
   errorMessage?: true
   createdAt?: true
   updatedAt?: true
@@ -206,6 +218,8 @@ export type StoreGroupByOutputType = {
   dbUser: string | null
   dbPassword: string | null
   wpAdminPassword: string | null
+  adminEmail: string | null
+  publishableApiKey: string | null
   errorMessage: string | null
   createdAt: Date
   updatedAt: Date
@@ -243,6 +257,8 @@ export type StoreWhereInput = {
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
   wpAdminPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  adminEmail?: Prisma.StringNullableFilter<"Store"> | string | null
+  publishableApiKey?: Prisma.StringNullableFilter<"Store"> | string | null
   errorMessage?: Prisma.StringNullableFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Store"> | Date | string
@@ -259,6 +275,8 @@ export type StoreOrderByWithRelationInput = {
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
   wpAdminPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishableApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -278,6 +296,8 @@ export type StoreWhereUniqueInput = Prisma.AtLeast<{
   dbUser?: Prisma.StringNullableFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableFilter<"Store"> | string | null
   wpAdminPassword?: Prisma.StringNullableFilter<"Store"> | string | null
+  adminEmail?: Prisma.StringNullableFilter<"Store"> | string | null
+  publishableApiKey?: Prisma.StringNullableFilter<"Store"> | string | null
   errorMessage?: Prisma.StringNullableFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Store"> | Date | string
@@ -294,6 +314,8 @@ export type StoreOrderByWithAggregationInput = {
   dbUser?: Prisma.SortOrderInput | Prisma.SortOrder
   dbPassword?: Prisma.SortOrderInput | Prisma.SortOrder
   wpAdminPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishableApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -316,6 +338,8 @@ export type StoreScalarWhereWithAggregatesInput = {
   dbUser?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   dbPassword?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   wpAdminPassword?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  adminEmail?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
+  publishableApiKey?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   errorMessage?: Prisma.StringNullableWithAggregatesFilter<"Store"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Store"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Store"> | Date | string
@@ -332,6 +356,8 @@ export type StoreCreateInput = {
   dbUser?: string | null
   dbPassword?: string | null
   wpAdminPassword?: string | null
+  adminEmail?: string | null
+  publishableApiKey?: string | null
   errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -348,6 +374,8 @@ export type StoreUncheckedCreateInput = {
   dbUser?: string | null
   dbPassword?: string | null
   wpAdminPassword?: string | null
+  adminEmail?: string | null
+  publishableApiKey?: string | null
   errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -364,6 +392,8 @@ export type StoreUpdateInput = {
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishableApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -380,6 +410,8 @@ export type StoreUncheckedUpdateInput = {
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishableApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -396,6 +428,8 @@ export type StoreCreateManyInput = {
   dbUser?: string | null
   dbPassword?: string | null
   wpAdminPassword?: string | null
+  adminEmail?: string | null
+  publishableApiKey?: string | null
   errorMessage?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -412,6 +446,8 @@ export type StoreUpdateManyMutationInput = {
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishableApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -428,6 +464,8 @@ export type StoreUncheckedUpdateManyInput = {
   dbUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dbPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wpAdminPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishableApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -444,6 +482,8 @@ export type StoreCountOrderByAggregateInput = {
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
   wpAdminPassword?: Prisma.SortOrder
+  adminEmail?: Prisma.SortOrder
+  publishableApiKey?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -460,6 +500,8 @@ export type StoreMaxOrderByAggregateInput = {
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
   wpAdminPassword?: Prisma.SortOrder
+  adminEmail?: Prisma.SortOrder
+  publishableApiKey?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -476,6 +518,8 @@ export type StoreMinOrderByAggregateInput = {
   dbUser?: Prisma.SortOrder
   dbPassword?: Prisma.SortOrder
   wpAdminPassword?: Prisma.SortOrder
+  adminEmail?: Prisma.SortOrder
+  publishableApiKey?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -514,6 +558,8 @@ export type StoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   dbUser?: boolean
   dbPassword?: boolean
   wpAdminPassword?: boolean
+  adminEmail?: boolean
+  publishableApiKey?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -530,6 +576,8 @@ export type StoreSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   dbUser?: boolean
   dbPassword?: boolean
   wpAdminPassword?: boolean
+  adminEmail?: boolean
+  publishableApiKey?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -546,6 +594,8 @@ export type StoreSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   dbUser?: boolean
   dbPassword?: boolean
   wpAdminPassword?: boolean
+  adminEmail?: boolean
+  publishableApiKey?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -562,12 +612,14 @@ export type StoreSelectScalar = {
   dbUser?: boolean
   dbPassword?: boolean
   wpAdminPassword?: boolean
+  adminEmail?: boolean
+  publishableApiKey?: boolean
   errorMessage?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subdomain" | "type" | "status" | "userId" | "dbName" | "dbUser" | "dbPassword" | "wpAdminPassword" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
+export type StoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subdomain" | "type" | "status" | "userId" | "dbName" | "dbUser" | "dbPassword" | "wpAdminPassword" | "adminEmail" | "publishableApiKey" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
 
 export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Store"
@@ -583,6 +635,8 @@ export type $StorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     dbUser: string | null
     dbPassword: string | null
     wpAdminPassword: string | null
+    adminEmail: string | null
+    publishableApiKey: string | null
     errorMessage: string | null
     createdAt: Date
     updatedAt: Date
@@ -1019,6 +1073,8 @@ export interface StoreFieldRefs {
   readonly dbUser: Prisma.FieldRef<"Store", 'String'>
   readonly dbPassword: Prisma.FieldRef<"Store", 'String'>
   readonly wpAdminPassword: Prisma.FieldRef<"Store", 'String'>
+  readonly adminEmail: Prisma.FieldRef<"Store", 'String'>
+  readonly publishableApiKey: Prisma.FieldRef<"Store", 'String'>
   readonly errorMessage: Prisma.FieldRef<"Store", 'String'>
   readonly createdAt: Prisma.FieldRef<"Store", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Store", 'DateTime'>

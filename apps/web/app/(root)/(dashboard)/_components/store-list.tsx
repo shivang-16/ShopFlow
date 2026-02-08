@@ -63,8 +63,16 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const getAdminUrl = (subdomain: string) => {
-    return `${subdomain}/wp-admin`;
+  const getAdminUrl = (subdomain: string, type: string) => {
+    // Backend already appends /app/login for Medusa
+    // For WooCommerce, we need to append /wp-admin if not already present
+    if (type === "MEDUSA") {
+      return subdomain; // Already has /app/login from backend
+    } else if (type === "WOOCOMMERCE") {
+      // Check if /wp-admin is already in the URL
+      return subdomain.includes("/wp-admin") ? subdomain : `${subdomain}/wp-admin`;
+    }
+    return subdomain;
   };
 
   return (
@@ -183,15 +191,15 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Admin URL</label>
                             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                               <a 
-                                href={getAdminUrl(store.subdomain)} 
+                                href={getAdminUrl(store.subdomain, store.type)} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-sm text-teal-600 hover:text-teal-700 font-mono flex-1 hover:underline truncate"
                               >
-                                {getAdminUrl(store.subdomain)}
+                                {getAdminUrl(store.subdomain, store.type)}
                               </a>
                               <button
-                                onClick={() => copyToClipboard(getAdminUrl(store.subdomain), "Admin URL")}
+                                onClick={() => copyToClipboard(getAdminUrl(store.subdomain, store.type), "Admin URL")}
                                 className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                               >
                                 {copiedField === "Admin URL" ? (

@@ -92,6 +92,7 @@ export const createStore = async (req: Request, res: Response) => {
         dbUser,
         dbPassword,
         wpAdminPassword,
+        adminEmail,
       },
     });
 
@@ -179,9 +180,9 @@ export const createStore = async (req: Request, res: Response) => {
         logger.info(`[${store.id}] NodePort retrieved: ${nodePort}`);
         
         const publicIP = process.env.PUBLIC_IP || "localhost";
-        
+        const publicDomain = process.env.PUBLIC_DOMAIN || "localhost";
         // For Medusa, add /app/login to the URL
-        let storeUrl = nodePort ? `http://${publicIP}:${nodePort}` : fullUrl;
+        let storeUrl = nodePort ? `http://${publicDomain}:${nodePort}` : fullUrl;
         if (type === "MEDUSA" && nodePort) {
           storeUrl = `http://${publicIP}:${nodePort}/app/login`;
         }
