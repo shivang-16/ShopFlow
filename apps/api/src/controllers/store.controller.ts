@@ -126,8 +126,8 @@ export const createStore = async (req: Request, res: Response) => {
             sanitizedName,
             namespace,
             sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
-            process.env.DATABASE_URL,
-            process.env.REDIS_URL
+            undefined,
+            undefined
           );
         } else {
           throw new Error(`Unsupported store type: ${type}`);

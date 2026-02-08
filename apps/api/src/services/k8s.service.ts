@@ -493,8 +493,8 @@ class K8sService {
       logger.info(`Helm release ${releaseName} already exists, upgrading`);
     }
 
-    const dbUrl = databaseUrl || process.env.DATABASE_URL || "";
-    const rUrl = redisUrl || process.env.REDIS_URL || "";
+    const dbUrl = databaseUrl || "";
+    const rUrl = redisUrl || "";
 
     const sanitizedReleaseName = releaseName
       .toLowerCase()
@@ -505,13 +505,19 @@ class K8sService {
     const isProduction = process.env.NODE_ENV === 'production';
     const valuesFile = isProduction ? 'values-prod.yaml' : 'values-local.yaml';
 
-    const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
+    let command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
-      --set ingress.host=${domain} \
-      --set medusa.env.DATABASE_URL="${dbUrl}" \
-      --set medusa.env.REDIS_URL="${rUrl}" \
-      --values "${chartPath}/${valuesFile}" \
-      --wait --timeout 10m`;
+      --set ingress.host=${domain}`;
+    
+    if (dbUrl) {
+      command += ` \\\n      --set medusa.env.DATABASE_URL="${dbUrl}"`;
+    }
+    
+    if (rUrl) {
+      command += ` \\\n      --set medusa.env.REDIS_URL="${rUrl}"`;
+    }
+    
+    command += ` \\\n      --values "${chartPath}/${valuesFile}" \\\n      --wait --timeout 10m`;
 
     logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (Medusa)...`);
 
