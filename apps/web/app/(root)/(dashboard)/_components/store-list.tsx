@@ -101,16 +101,16 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
                 <td className="px-6 py-4">
                   {store.status === "READY" ? (
                     <a
-                      href={`http://${store.subdomain}`}
+                      href={store.subdomain}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 group/link"
+                      className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1.5 group/link hover:underline"
                     >
-                      {store.subdomain}
-                      <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                      <span>Visit Store</span>
+                      <ExternalLink className="w-4 h-4" />
                     </a>
                   ) : (
-                    <span className="text-sm text-gray-400">{store.subdomain}</span>
+                    <span className="text-sm text-gray-400 font-medium">Provisioning...</span>
                   )}
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(store.status)}</td>

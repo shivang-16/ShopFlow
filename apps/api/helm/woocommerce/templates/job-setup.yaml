@@ -1,0 +1,102 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-setup
+  labels:
+    app: {{ .Release.Name }}-wordpress
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-setup-job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: setup
+        image: wordpress:cli-php8.1
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            set -e
+            
+            echo "Waiting for WordPress and Database to be ready..."
+            
+            # Wait for WordPress pod to be accessible
+            until curl -sf http://{{ .Release.Name }}-wordpress/wp-admin/install.php > /dev/null 2>&1; do
+              echo "Waiting for WordPress..."
+              sleep 5
+            done
+            
+            echo "WordPress is accessible. Starting setup..."
+            
+            # Check if already set up
+            if wp core is-installed --path=/var/www/html --allow-root 2>/dev/null; then
+              echo "WordPress already installed. Checking plugins..."
+              
+              if wp plugin is-installed woocommerce --path=/var/www/html --allow-root 2>/dev/null; then
+                echo "WooCommerce already installed. Skipping setup."
+                exit 0
+              fi
+            else
+              echo "Installing WordPress..."
+              wp core install \
+                --url="http://localhost" \
+                --title="ShopFlow Store" \
+                --admin_user="admin" \
+                --admin_password="StrongP@ssw0rd123!" \
+                --admin_email="admin@example.com" \
+                --path=/var/www/html \
+                --allow-root
+            fi
+            
+            echo "Installing WooCommerce..."
+            wp plugin install woocommerce --activate --path=/var/www/html --allow-root
+            
+            echo "Installing Storefront theme..."
+            wp theme install storefront --activate --path=/var/www/html --allow-root
+            
+            echo "Creating WooCommerce pages..."
+            wp wc tool run install_pages --user=1 --path=/var/www/html --allow-root || true
+            
+            echo "Enabling Cash on Delivery..."
+            wp option patch update woocommerce_cod_settings enabled yes --path=/var/www/html --allow-root
+            
+            echo "Creating sample products..."
+            wp post create --post_type=product --post_title='Sample T-Shirt' --post_status=publish --path=/var/www/html --allow-root
+            wp post meta add $(wp post list --post_type=product --format=ids --posts_per_page=1 --path=/var/www/html --allow-root) _regular_price 29.99 --path=/var/www/html --allow-root
+            wp post meta add $(wp post list --post_type=product --format=ids --posts_per_page=1 --path=/var/www/html --allow-root) _price 29.99 --path=/var/www/html --allow-root
+            
+            echo "Setup complete! 🎉"
+            echo "Login: admin / StrongP@ssw0rd123!"
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: {{ .Release.Name }}-mariadb
+        - name: WORDPRESS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-database
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-user
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-db-secret
+              key: mariadb-password
+        volumeMounts:
+        - name: wordpress-data
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-data
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-wordpress-pvc
