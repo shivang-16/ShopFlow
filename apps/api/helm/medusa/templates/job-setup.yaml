@@ -51,110 +51,30 @@ spec:
             echo "Seeding database with sample data..."
             npx medusa seed -f ./data/seed.json || echo "Seed might have already run"
             
-            echo "Creating Publishable API Key programmatically..."
-            
-            # Create a temporary script to generate the API key
-            cat > /tmp/create-api-key.js <<'EOFSCRIPT'
-const createKey = async () => {
-  try {
-    const container = require("@medusajs/medusa/dist/loaders/index").default;
-    const app = await container({ directory: process.cwd() });
-    const publishableApiKeyService = app.resolve("publishableApiKeyService");
-    const key = await publishableApiKeyService.create({ title: "Store Frontend Key", created_by: "setup-job" });
-    console.log("API_KEY_CREATED:" + key.id);
-    process.exit(0);
-  } catch (error) {
-    console.error("Failed to create API key:", error.message);
-    process.exit(1);
-  }
-};
-createKey();
-EOFSCRIPT
-            
-            # Try to execute the script
-            PUB_KEY=$(npx medusa exec /tmp/create-api-key.js 2>&1 | grep "API_KEY_CREATED:" | cut -d':' -f2)
-            
-            if [ -n "$PUB_KEY" ]; then
-              echo "✅ Publishable API Key created: $PUB_KEY"
-              
-              echo "Creating sample products programmatically..."
-              
-              # Create a script to add products
-              cat > /tmp/create-products.js <<'EOFPRODUCTS'
-const createProducts = async () => {
-  try {
-    const container = require("@medusajs/medusa/dist/loaders/index").default;
-    const app = await container({ directory: process.cwd() });
-    const productService = app.resolve("productService");
-    
-    await productService.create({ title: "Classic T-Shirt", subtitle: "Comfortable cotton tee", description: "A soft and comfortable cotton t-shirt", handle: "classic-tshirt", status: "published", options: [{ title: "Size" }], variants: [{ title: "Small", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "S" }], manage_inventory: false, inventory_quantity: 100 }, { title: "Medium", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "M" }], manage_inventory: false, inventory_quantity: 100 }, { title: "Large", prices: [{ currency_code: "usd", amount: 2999 }], options: [{ value: "L" }], manage_inventory: false, inventory_quantity: 100 }] });
-    
-    await productService.create({ title: "Ceramic Coffee Mug", subtitle: "Start your day right", description: "Premium ceramic mug", handle: "ceramic-mug", status: "published", variants: [{ title: "Default", prices: [{ currency_code: "usd", amount: 1499 }], manage_inventory: false, inventory_quantity: 50 }] });
-    
-    await productService.create({ title: "Cozy Hoodie", subtitle: "Stay warm", description: "Super soft fleece hoodie", handle: "cozy-hoodie", status: "published", options: [{ title: "Size" }, { title: "Color" }], variants: [{ title: "Medium / Black", prices: [{ currency_code: "usd", amount: 5999 }], options: [{ value: "M" }, { value: "Black" }], manage_inventory: false, inventory_quantity: 30 }, { title: "Large / Black", prices: [{ currency_code: "usd", amount: 5999 }], options: [{ value: "L" }, { value: "Black" }], manage_inventory: false, inventory_quantity: 30 }] });
-    
-    console.log("PRODUCTS_CREATED:3");
-    process.exit(0);
-  } catch (error) {
-    console.error("Failed:", error.message);
-    process.exit(1);
-  }
-};
-createProducts();
-EOFPRODUCTS
-              
-              PRODUCTS_COUNT=$(npx medusa exec /tmp/create-products.js 2>&1 | grep "PRODUCTS_CREATED:" | cut -d':' -f2)
-              
-              if [ -n "$PRODUCTS_COUNT" ]; then
-                echo "✅ Created $PRODUCTS_COUNT sample products"
-              else
-                echo "⚠️ Could not create sample products (might need to be done manually)"
-              fi
-              
-              echo ""
-              echo "================================================"
-              echo "✅ Medusa setup completed!"
-              echo "================================================"
-              echo "Admin Login:"
-              echo "  Email: {{ .Values.medusa.adminEmail }}"
-              echo "  Password: {{ .Values.medusa.adminPassword }}"
-              echo ""
-              echo "Publishable API Key:"
-              echo "  $PUB_KEY"
-              echo ""
-              echo "Store API (try it now!):"
-              echo "  curl http://{{ .Release.Name }}:9000/store/products \\"
-              echo "    -H \"x-publishable-api-key: $PUB_KEY\""
-              echo ""
-              echo "Sample Products Created: $PRODUCTS_COUNT"
-              echo "  - Classic T-Shirt (\$29.99)"
-              echo "  - Ceramic Coffee Mug (\$14.99)"
-              echo "  - Cozy Hoodie (\$59.99)"
-              echo "================================================"
-            else
-              echo "⚠️ Could not create API key automatically"
-              
-              echo ""
-              echo "================================================"
-              echo "✅ Medusa setup completed!"
-              echo "================================================"
-              echo "Admin Login:"
-              echo "  Email: {{ .Values.medusa.adminEmail }}"
-              echo "  Password: {{ .Values.medusa.adminPassword }}"
-              echo ""
-              echo "⚠️  IMPORTANT: Create Publishable API Key"
-              echo ""
-              echo "To access Store API (/store/products, etc.), you need to:"
-              echo "  1. Login to admin panel above"
-              echo "  2. Go to: Settings → Developer → Publishable API Keys"
-              echo "  3. Click 'Create API Key'"
-              echo "  4. Copy the key (starts with pk_)"
-              echo ""
-              echo "Then use it in requests:"
-              echo "  curl http://{{ .Release.Name }}:9000/store/products \\"
-              echo "    -H \"x-publishable-api-key: YOUR_KEY_HERE\""
-              echo "================================================"
-            fi
+            echo ""
+            echo "================================================"
+            echo "✅ Medusa setup completed!"
+            echo "================================================"
+            echo "Admin Login:"
+            echo "  Email: {{ .Values.medusa.adminEmail }}"
+            echo "  Password: {{ .Values.medusa.adminPassword }}"
+            echo ""
+            echo "⚠️  IMPORTANT: To use Store API"
+            echo ""
+            echo "Create Publishable API Key:"
+            echo "  1. Login to admin panel above"
+            echo "  2. Go to: Settings → Developer → Publishable API Keys"
+            echo "  3. Click 'Create API Key'"
+            echo "  4. Assign it to 'Default Sales Channel'"
+            echo "  5. Copy the key (starts with pk_)"
+            echo ""
+            echo "Then test Store API:"
+            echo "  curl http://{{ .Release.Name }}:9000/store/products \\"
+            echo "    -H \"x-publishable-api-key: YOUR_KEY\""
+            echo ""
+            echo "Note: Medusa is headless - no storefront included."
+            echo "      Admin panel is for managing products only."
+            echo "================================================"
         env:
         {{- range $key, $value := .Values.medusa.env }}
         - name: {{ $key }}
