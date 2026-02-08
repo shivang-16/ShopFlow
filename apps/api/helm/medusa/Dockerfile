@@ -10,6 +10,8 @@ RUN medusa new medusa-store --skip-db --skip-env --skip-migrations
 
 WORKDIR /app/medusa-store
 
+RUN npx medusa build
+
 EXPOSE 9000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
