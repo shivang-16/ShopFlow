@@ -295,27 +295,28 @@ class K8sService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    const command = `kubectl run wp-update-url --image=wordpress:cli-php8.1 --rm -i --restart=Never --namespace=${namespace} --overrides='
-{
-  "spec": {
-    "securityContext": {"runAsUser": 0, "runAsGroup": 0},
-    "containers": [{
-      "name": "wp-update",
-      "image": "wordpress:cli-php8.1",
-      "stdin": true,
-      "command": ["/bin/sh", "-c"],
-      "args": ["wp option update home ${siteUrl} --path=/var/www/html --allow-root && wp option update siteurl ${siteUrl} --path=/var/www/html --allow-root"],
-      "volumeMounts": [{"name": "wordpress-data", "mountPath": "/var/www/html"}],
-      "env": [
-        {"name": "WORDPRESS_DB_HOST", "value": "${sanitizedReleaseName}-mariadb"},
-        {"name": "WORDPRESS_DB_NAME", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-database"}}},
-        {"name": "WORDPRESS_DB_USER", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-user"}}},
-        {"name": "WORDPRESS_DB_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "${sanitizedReleaseName}-db-secret", "key": "mariadb-password"}}}
-      ]
-    }],
-    "volumes": [{"name": "wordpress-data", "persistentVolumeClaim": {"claimName": "${sanitizedReleaseName}-wordpress-pvc"}}]
-  }
-}'`;
+    const overrides = {
+      spec: {
+        securityContext: { runAsUser: 0, runAsGroup: 0 },
+        containers: [{
+          name: "wp-update",
+          image: "wordpress:cli-php8.1",
+          stdin: true,
+          command: ["/bin/sh", "-c"],
+          args: [`wp option update home "${siteUrl}" --path=/var/www/html --allow-root && wp option update siteurl "${siteUrl}" --path=/var/www/html --allow-root`],
+          volumeMounts: [{ name: "wordpress-data", mountPath: "/var/www/html" }],
+          env: [
+            { name: "WORDPRESS_DB_HOST", value: `${sanitizedReleaseName}-mariadb` },
+            { name: "WORDPRESS_DB_NAME", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-database" } } },
+            { name: "WORDPRESS_DB_USER", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-user" } } },
+            { name: "WORDPRESS_DB_PASSWORD", valueFrom: { secretKeyRef: { name: `${sanitizedReleaseName}-db-secret`, key: "mariadb-password" } } }
+          ]
+        }],
+        volumes: [{ name: "wordpress-data", persistentVolumeClaim: { claimName: `${sanitizedReleaseName}-wordpress-pvc` } }]
+      }
+    };
+
+    const command = `kubectl run wp-update-url --image=wordpress:cli-php8.1 --rm -i --restart=Never --namespace=${namespace} --overrides='${JSON.stringify(overrides)}'`;
 
     try {
       logger.info(`Updating WordPress site URL to: ${siteUrl}`);
