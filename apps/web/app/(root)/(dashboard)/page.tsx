@@ -128,7 +128,7 @@ export default function Home() {
           <div className="bg-yellow-50 p-6 rounded-2xl border border-yellow-100 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <span className="text-sm font-bold text-gray-700 tracking-tight">Provisioning</span>
-              <Loader2 className="w-6 h-6 text-yellow-600 animate-spin" />
+              <AlertCircle className="w-6 h-6 text-yellow-600" />
             </div>
             <h3 className="text-4xl font-black text-gray-900 tracking-tighter">{stats.provisioning}</h3>
           </div>

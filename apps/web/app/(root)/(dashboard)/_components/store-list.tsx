@@ -212,14 +212,21 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Username</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                              {store.type === "MEDUSA" ? "Email" : "Username"}
+                            </label>
                             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                              <span className="text-sm text-gray-900 font-mono flex-1">admin</span>
+                              <span className="text-sm text-gray-900 font-mono flex-1">
+                                {store.type === "MEDUSA" ? "admin@medusa.local" : "admin"}
+                              </span>
                               <button
-                                onClick={() => copyToClipboard("admin", "Username")}
+                                onClick={() => copyToClipboard(
+                                  store.type === "MEDUSA" ? "admin@medusajs.com" : "admin",
+                                  store.type === "MEDUSA" ? "Email" : "Username"
+                                )}
                                 className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                               >
-                                {copiedField === "Username" ? (
+                                {copiedField === (store.type === "MEDUSA" ? "Email" : "Username") ? (
                                   <Check className="w-4 h-4 text-green-500" />
                                 ) : (
                                   <Copy className="w-4 h-4" />

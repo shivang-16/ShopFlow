@@ -16,8 +16,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "ShoFlow - Cloud Storage",
-  description: "AI-powered, secure cloud storage for seamless file sharing and enhanced collaboration.",
+  title: "ShopFlow - Cloud Store Builder",
+  description: "Spin Your WooCommerce or Medusa Store in Seconds",
 };
 
 export default function RootLayout({

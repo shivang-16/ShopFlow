@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Store, label: "My Store", href: "/stores" },
+  // { icon: Store, label: "My Store", href: "/stores" },
 ];
 
 export function Sidebar() {
