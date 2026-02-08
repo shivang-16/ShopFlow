@@ -248,7 +248,7 @@ export const getStoreStatus = async (req: Request, res: Response) => {
 
 export const getStoreLogs = async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
-  const { podName } = req.query;
+  const { podName, jobName, tailLines = 200 } = req.query;
 
   try {
     const store = await prisma.store.findUnique({ where: { id } });
@@ -258,13 +258,33 @@ export const getStoreLogs = async (req: Request, res: Response) => {
 
     const namespace = `store-${store.id}`;
 
-    if (!podName) {
-      return res.status(400).json({ error: "podName query parameter required" });
+    if (jobName) {
+      const logs = await k8sService.getJobLogs(namespace, String(jobName), Number(tailLines));
+      return res.json({ 
+        jobName: String(jobName),
+        logs 
+      });
     }
 
-    const logs = await k8sService.getPodLogs(namespace, podName as string);
+    if (podName) {
+      const logs = await k8sService.getPodLogs(namespace, String(podName), Number(tailLines));
+      return res.json({ 
+        podName: String(podName),
+        logs 
+      });
+    }
 
-    res.json({ logs });
+    const pods = await k8sService.getStorePods(namespace);
+    const logsData: any = {
+      pods,
+      logs: {}
+    };
+
+    for (const pod of pods) {
+      logsData.logs[pod.name] = await k8sService.getPodLogs(namespace, pod.name, Number(tailLines));
+    }
+
+    res.json(logsData);
   } catch (error) {
     logger.error("Get store logs API error", error);
     res.status(500).json({ error: "Failed to get store logs" });

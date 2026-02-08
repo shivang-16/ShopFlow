@@ -228,6 +228,63 @@ class K8sService {
     }
   }
 
+  async getStorePods(namespace: string): Promise<Array<{ name: string; type: string; status: string }>> {
+    if (!this.k8sApi) {
+      return [];
+    }
+
+    try {
+      const podsResponse = await this.k8sApi.listNamespacedPod({ namespace });
+      return podsResponse.items.map((pod) => ({
+        name: pod.metadata?.name || "unknown",
+        type: pod.metadata?.name?.includes("wordpress") ? "wordpress" : 
+              pod.metadata?.name?.includes("mariadb") ? "mariadb" :
+              pod.metadata?.name?.includes("setup") ? "setup-job" : "other",
+        status: pod.status?.phase || "Unknown"
+      }));
+    } catch (err: any) {
+      logger.error(`Error listing pods in ${namespace}:`, err);
+      return [];
+    }
+  }
+
+  async getJobLogs(namespace: string, jobName: string, tailLines: number = 200): Promise<string> {
+    if (!this.k8sApi) {
+      return "K8s API not available";
+    }
+
+    try {
+      // Get pods created by the job
+      const podsResponse = await this.k8sApi.listNamespacedPod({
+        namespace,
+        labelSelector: `job-name=${jobName}`
+      });
+
+      if (podsResponse.items.length === 0) {
+        return "No pods found for this job. Job may have been cleaned up.";
+      }
+
+      // Get logs from the latest pod
+      const latestPod = podsResponse.items[podsResponse.items.length - 1];
+      const podName = latestPod.metadata?.name;
+
+      if (!podName) {
+        return "Could not find pod name";
+      }
+
+      const logsResponse = await this.k8sApi.readNamespacedPodLog({
+        name: podName,
+        namespace,
+        tailLines,
+      });
+
+      return logsResponse;
+    } catch (err: any) {
+      logger.error(`Error getting job logs for ${jobName}:`, err);
+      return `Error: ${err.message}`;
+    }
+  }
+
   async checkHelmRelease(releaseName: string, namespace: string): Promise<boolean> {
     try {
       const command = `helm status ${releaseName} -n ${namespace}`;

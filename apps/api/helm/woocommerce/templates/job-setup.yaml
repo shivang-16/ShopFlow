@@ -26,13 +26,27 @@ spec:
           - |
             set -e
             
+            echo "Installing dependencies..."
+            apk add --no-cache curl
+            
             echo "Waiting for WordPress and Database to be ready..."
             
-            # Wait for WordPress pod to be accessible
-            until curl -sf http://{{ .Release.Name }}-wordpress/wp-admin/install.php > /dev/null 2>&1; do
-              echo "Waiting for WordPress..."
-              sleep 5
+            # Wait for WordPress service to be accessible
+            sleep 30
+            
+            # Try to connect to WordPress
+            RETRIES=0
+            MAX_RETRIES=30
+            until curl -sf http://{{ .Release.Name }}-wordpress/wp-admin/install.php > /dev/null 2>&1 || [ $RETRIES -eq $MAX_RETRIES ]; do
+              echo "Waiting for WordPress... (attempt $RETRIES/$MAX_RETRIES)"
+              sleep 10
+              RETRIES=$((RETRIES+1))
             done
+            
+            if [ $RETRIES -eq $MAX_RETRIES ]; then
+              echo "ERROR: WordPress did not become ready in time"
+              exit 1
+            fi
             
             echo "WordPress is accessible. Starting setup..."
             
@@ -66,12 +80,14 @@ spec:
             wp wc tool run install_pages --user=1 --path=/var/www/html --allow-root || true
             
             echo "Enabling Cash on Delivery..."
-            wp option patch update woocommerce_cod_settings enabled yes --path=/var/www/html --allow-root
+            wp option patch update woocommerce_cod_settings enabled yes --path=/var/www/html --allow-root || true
             
-            echo "Creating sample products..."
-            wp post create --post_type=product --post_title='Sample T-Shirt' --post_status=publish --path=/var/www/html --allow-root
-            wp post meta add $(wp post list --post_type=product --format=ids --posts_per_page=1 --path=/var/www/html --allow-root) _regular_price 29.99 --path=/var/www/html --allow-root
-            wp post meta add $(wp post list --post_type=product --format=ids --posts_per_page=1 --path=/var/www/html --allow-root) _price 29.99 --path=/var/www/html --allow-root
+            echo "Creating sample product..."
+            PRODUCT_ID=$(wp post create --post_type=product --post_title='Sample T-Shirt' --post_status=publish --path=/var/www/html --allow-root --porcelain)
+            wp post meta add $PRODUCT_ID _regular_price 29.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID _price 29.99 --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID _manage_stock no --path=/var/www/html --allow-root
+            wp post meta add $PRODUCT_ID _stock_status instock --path=/var/www/html --allow-root
             
             echo "Setup complete! 🎉"
             echo "Login: admin / StrongP@ssw0rd123!"
