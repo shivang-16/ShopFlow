@@ -8,7 +8,7 @@ Start your own store in seconds, with dedicated resources, automated setup, and 
 
 ### 🚀 Sample Stores (Running Live on K3s)
 *   **WooCommerce Store:** [https://seventen.shivangyadav.com/](https://seventen.shivangyadav.com/?post_type=product)
-    *   **Admin Access:** Username: `admin`, Password: `sMq80HsbtUhRGLZm` (or check console output)
+    *   **Admin Access:** Username: `admin`, Password: `sMq80HsbtUhRGLZm` 
 *   **Medusa Admin Dashboard:** [http://43.205.194.216:32165/app/login](http://43.205.194.216:32165/app/login)
     *   **Email:** `admin@medusa.local`
     *   **Password:** `phWq9GDIEukFP1N5`
