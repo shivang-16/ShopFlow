@@ -9,10 +9,10 @@ medusa:
   
   resources:
     requests:
-      memory: "512Mi"
+      memory: "750Mi"
       cpu: "200m"
     limits:
-      memory: "768Mi"
+      memory: "1Gi"
       cpu: "500m"
   
   service:
