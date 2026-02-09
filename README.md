@@ -7,7 +7,7 @@ Start your own store in seconds, with dedicated resources, automated setup, and 
 **Live:** [https://shop-flow-web-olive.vercel.app/](https://shop-flow-web-olive.vercel.app/)
 
 ### 🚀 Sample Stores (Running Live on K3s)
-*   **WooCommerce Store:** [https://palmonas.shivangyadav.com/](https://palmonas.shivangyadav.com/)
+*   **WooCommerce Store:** [https://seventen.shivangyadav.com/](https://seventen.shivangyadav.com/?post_type=product)
     *   **Admin Access:** Username: `admin`, Password: `changeme` (or check console output)
 *   **Medusa Admin Dashboard:** [http://43.205.194.216:32165/app/login](http://43.205.194.216:32165/app/login)
     *   **Email:** `admin@medusa.local`
@@ -172,7 +172,7 @@ WooCommerce is fully compatible with host-based routing.
     1.  User creates a store named "palmonas".
     2.  System assigns domain `palmonas.shivangyadav.com`.
     3.  Ingress route is created pointing `palmonas.shivangyadav.com` -> `svc/store-palmonas` on port 80.
-*   **Live Example:** [https://palmonas.shivangyadav.com/](https://palmonas.shivangyadav.com/)
+*   **Live Example:** [https://seventen.shivangyadav.com/](https://seventen.shivangyadav.com/)
 
 #### ⚡ MedusaJS: Direct NodePort Access
 Medusa's Admin Dashboard has strict CORS and domain configurations that can be tricky behind standard Ingress in this specific environment ("Blocking Custom Domains").
