@@ -1,193 +1,198 @@
-# ShopFlow - Kubernetes Store Orchestration Platform
+# ShopFlow: Multi-Tenant E-commerce Provisioning Platform
 
-ShopFlow is a "store provisioning platform" that runs on Kubernetes (local & production). It allows users to provision, manage, and scale e-commerce stores (WooCommerce & MedusaJS) instantly via a React dashboard.
+ShopFlow is a robust, Kubernetes-native platform that enables users to instantly provision, manage, and scale E-commerce stores. It supports two major platforms: **WooCommerce** (WordPress) and **MedusaJS**.
 
-![Dashboard Screenshot](https://via.placeholder.com/800x400?text=ShopFlow+Dashboard)
+Start your own store in seconds, with dedicated resources, automated setup, and production-grade reliability.
 
-## 🚀 Features
+**Live Demo:** [https://shop-flow-web-olive.vercel.app/](https://shop-flow-web-olive.vercel.app/)
 
-- **Multi-Engine Support**: Provision **WooCommerce** (WordPress + MariaDB) or **MedusaJS** (Node.js + Postgres + Redis) stores.
-- **Kubernetes Native**: Uses Helm charts, Deployments, StatefulSets, PVCs, and Ingress.
-- **Isolation**: Each store runs in its own Kubernetes namespace with ResourceQuotas and NetworkPolicies.
-- **Production Ready**: Deploys to AWS EC2 (k3s) with real DNS and Let's Encrypt SSL.
-- **Abuse Prevention**: Rate limiting (IP & User-based), per-user quotas, and audit logging.
-- **Self-Healing**: Automated readiness/liveness probes and state reconciliation.
-
----
-
-## 🛠️ Architecture & System Design
-
-### **Architecture Choice**
-The system follows a **Control Plane** architecture pattern:
-
-1. **Dashboard (React)**: User interface for managing stores.
-2. **API (Express/Node.js)**: Acts as the "Store Controller". It talks to the Kubernetes API server to orchestrate resources.
-3. **Kubernetes Cluster**:
-   - **Ingress Controller (Nginx)**: Routes traffic to specific stores based on subdomains (`store-1.shopflow.com`).
-   - **Namespaces**: One namespace per store for strong isolation.
-   - **Helm**: Used as the templating engine to deploy standardized store blueprints.
-
-### **Idempotency & Failure Handling**
-- **Idempotent Provisioning**: The API checks if a namespace/release exists before creating. Re-running a provision command is safe.
-- **Atomic Operations**: Database creation and Helm installs are sequenced. If a step fails, the system reports the specific failure state ("PROVISIONING" -> "FAILED").
-- **Cleanup**: Deleting a store removes the entire namespace, ensuring 100% resource cleanup (PVCs, Secrets, Services).
-
-### **Production vs. Local Differences**
-
-| Feature | Local (Kind/Minikube) | Production (AWS EC2 + k3s) |
-|---------|----------------------|----------------------------|
-| **Ingress** | `*.local.test` (via `/etc/hosts`) | Real DNS (`*.yourdomain.com`) |
-| **Storage** | `standard` / `hostPath` | `local-path` (k3s) or EBS (EKS) |
-| **Secrets** | Plain text / simple secrets | External Secrets / Encrypted |
-| **Scaling** | Single replica | Horizontal Pod Autoscaling (HPA) |
-| **Values** | `values-local.yaml` | `values-prod.yaml` |
+### 🚀 Sample Stores (Running Live on K3s)
+*   **WooCommerce Store:** [https://palmonas.shivangyadav.com/](https://palmonas.shivangyadav.com/)
+    *   **Admin Access:** Username: `admin`, Password: `changeme` (or check console output)
+*   **Medusa Admin Dashboard:** [http://43.205.194.216:32165/app/login](http://43.205.194.216:32165/app/login)
+    *   **Email:** `admin@medusa.local`
+    *   **Password:** `phWq9GDIEukFP1N5`
 
 ---
 
-## 💻 Local Setup Instructions
+## ✨ Key Features
+
+*   **Multi-Tenancy & Isolation:** Each store runs in its own Kubernetes Namespace with strict **ResourceQuotas** and **NetworkPolicies** to prevent noisy neighbors.
+*   **Fully Automated Provisioning:** One click triggers a complete setup including Database (MySQL/Postgres), Redis, App Server, and Storage.
+*   **Secure Authentication:** Powered by **Clerk** for seamless user management and SSO.
+*   **Production Ready:**
+    *   **Domain Management:** Automatic subdomain assignment (`store-name.shivangyadav.com`).
+    *   **Resilience:** Self-healing reconciliation service that recovers stuck deployments on restart.
+    *   **Resource Management:** Smart limits (CPU/RAM) tailored for small-node clusters (e.g., EC2 t3.medium).
+*   **Dual Platform Support:**
+    *   **WooCommerce:** Full WordPress setup with auto-configured products, posts, and COD payment method.
+    *   **MedusaJS:** Modern headless commerce backend with a dedicated Admin dashboard.
+
+---
+
+## 🛍️ Supported Platforms
+
+### 1. WooCommerce (Fully Implemented)
+A complete, ready-to-sell store out of the box.
+*   **Version:** Latest WordPress + WooCommerce.
+*   **Automation:**
+    *   **Auto-Login:** Admin credentials generated and securely stored.
+    *   **Pre-Seeded Content:** Automatically creates sample products ("T-Shirt", "Jeans") and blog posts upon installation.
+    *   **Payment Gateway:** Cash on Delivery (COD) enabled by default.
+    *   **Configuration:** Site URL and Permalink structure automatically updated to match the assigned subdomain.
+*   **Tech Stack:** WordPress Container + MariaDB + Persistent Volume Claims.
+
+### 2. MedusaJS (Headless Commerce)
+A developer-friendly, API-first commerce engine.
+*   **Components:**
+    *   **Medusa Backend:** The core API server.
+    *   **Medusa Admin:** A dashboard for managing products, orders, and customers.
+    *   **PostgreSQL:** Dedicated database for store data.
+    *   **Redis:** For event handling and caching.
+    *   **Stack:** Built on `ghcr.io/shivang-16/shopflow-medusa:latest` (Custom optimized image).
+*   **Access:** Users get a direct link to the Admin Dashboard to start managing their inventory immediately.
+
+---
+
+## 🛠️ Local Development Setup
+
+Follow these steps to run ShopFlow on your local machine using **Kind** (Kubernetes in Docker).
 
 ### Prerequisites
-- Node.js & pnpm
-- Docker
-- Kubernetes Cluster (Kind, Minikube, or Docker Desktop K8s)
-- Helm 3
-- `kubectl` configured
+*   Node.js (v18+) & pnpm
+*   Docker Desktop
+*   **Kind** (`brew install kind`)
+*   Helm (v3+)
+*   Kubectl
 
-### 1. Start Local Cluster & Ingress
-```bash
-# Using Kind (example)
-kind create cluster --config k8s/kind-config.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-```
+### Steps
 
-### 2. Install Dependencies
-```bash
-# Root directory
-pnpm install
-```
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/shivang-16/shopflow
+    cd shopflow
+    ```
 
-### 3. Configure Environment
-Create `.env` in `apps/api`:
-```bash
-PORT=4001
-FRONTEND_URL=http://localhost:3000
-KUBECONFIG_PATH=~/.kube/config
-```
+2.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
 
-Create `.env.local` in `apps/web`:
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4001
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
-CLERK_SECRET_KEY=...
-```
+3.  **Start Local Kubernetes Cluster**
+    ```bash
+    kind create cluster --name shopflow
+    kubectl cluster-info --context kind-shopflow
+    ```
 
-### 4. Run Development Server
-```bash
-pnpm dev
-# Frontend: http://localhost:3000
-# API: http://localhost:4001
-```
+4.  **Configure Environment Variables**
 
-### 5. Local DNS (Important!)
-Add these entries to your `/etc/hosts`:
-```
-127.0.0.1 shopflow.local
-127.0.0.1 store-1.shopflow.local
-127.0.0.1 store-2.shopflow.local
-```
+    **Backend (`apps/api/.env`):**
+    ```env
+    DATABASE_URL="postgresql://user:pass@endpoint:5432/postgres" # Use Supabase/Local
+    PORT=4001
+    FRONTEND_URL="http://localhost:3000"
+    
+    # Clerk Auth
+    CLERK_PUBLISHABLE_KEY=pk_test_...
+    CLERK_SECRET_KEY=sk_test_...
 
----
+    # Redis (For Job Queues)
+    REDIS_URL="rediss://default:pass@redis-endpoint:port"
+    
+    # K8s Config
+    DOCKER_USERNAME="your-docker-user"
+    PUBLIC_IP="127.0.0.1" # For local testing
+    NODE_ENV="development"
+    ```
 
-## ☁️ VPS / Production Setup (k3s on EC2)
+    **Frontend (`apps/web/.env.local`):**
+    ```env
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+    CLERK_SECRET_KEY=sk_test_...
+    
+    # Clerk Routes
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+    NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+    NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
 
-### 1. Provision Server
-- Launch an Ubuntu EC2 instance (t3.large or larger recommended).
-- Allow ports: 80, 443, 6443, 30000-32767.
+    # API Endpoint
+    NEXT_PUBLIC_API_BASE_URL="http://localhost:4001"
+    ```
 
-### 2. Install k3s
-```bash
-curl -sfL https://get.k3s.io | sh -
-# Get kubeconfig
-sudo cat /etc/rancher/k3s/k3s.yaml
-```
+5.  **Run Database Migrations**
+    ```bash
+    cd apps/api
+    npx prisma migrate dev
+    ```
 
-### 3. Setup DNS
-Point your domain (e.g., `*.yourdomain.com`) to the EC2 IP address.
-
-### 4. Deploy API & Frontend
-You can use the provided GitHub Actions workflow or deploy manually.
-```bash
-# Apply RBAC for API
-kubectl apply -f k8s/rbac.yaml
-
-# Deploy API
-kubectl apply -f k8s/api-deployment.yaml
-```
-
-### 5. Configure API for Production
-Update `apps/api/helm/*/values-prod.yaml` with your domain:
-```yaml
-ingress:
-  host: "store-name.yourdomain.com"
-```
+6.  **Start the Development Servers**
+    ```bash
+    # From root
+    pnpm dev
+    ```
+    *   **Frontend:** http://localhost:3000
+    *   **Backend:** http://localhost:4001
 
 ---
 
-## 🛒 How to Create a Store & Place Order
+## ☁️ Production Deployment (EC2 + K3s)
 
-1. **Create Store**:
-   - Go to Dashboard -> Click "Create Store".
-   - Select Type: "WooCommerce" or "Medusa".
-   - Enter Name: "My Awesome Store".
-   - Click "Create".
-   - Status will go from **Provisioning** (yellow) -> **Ready** (green).
+This section details how I deployed ShopFlow to a production AWS EC2 instance (Ubuntu t3.medium).
 
-2. **Access Store**:
-   - Click the "URL" link in the dashboard.
-   - **WooCommerce**: Log in with `admin` / `password` (shown in dashboard).
-   - **Medusa**: Use the storefront URL.
+### 1. Infrastructure Setup
+*   **OS:** Ubuntu 22.04 LTS
+*   **Cluster:** **K3s** (Lightweight Kubernetes).
+    ```bash
+    curl -sfL https://get.k3s.io | sh -
+    # K3s uses very low resources (~500MB RAM), perfect for small nodes.
+    ```
+*   **Storage:** Local Path Provisioner (Default in K3s) handles dynamic PVC creation.
+*   **Public IP:** `43.205.194.216` (Elastic IP attached to EC2).
+*   **DNS:** Wildcard A record (`*.shivangyadav.com`) points to `43.205.194.216`.
 
-3. **Place Order**:
-   - Browse products.
-   - Add to Cart.
-   - Checkout (Cash on Delivery enabled by default).
-   - Verify order in Admin Panel.
+### 2. Medusa Custom Image
+Since Medusa requires build steps, I created a custom Docker image optimized for this platform.
+*   **Docker Image:** `ghcr.io/shivang-16/shopflow-medusa:latest`
+*   **Optimizations:**
+    *   Pre-built admin dashboard to save boot time.
+    *   Running in production mode (`npm run start`).
+    *   Includes `cnpg` and migrations script for auto-seeding.
+
+### 3. Domain Strategy & Traffic Routing
+
+We use a hybrid approach to expose stores based on platform compatibility.
+
+#### 🛒 WooCommerce: Dedicated Subdomains (Ingress)
+WooCommerce is fully compatible with host-based routing.
+*   **Method:** We use **ClusterIP** services combined with K3s's built-in **Traefik Ingress Controller**.
+*   **Flow:**
+    1.  User creates a store named "palmonas".
+    2.  System assigns domain `palmonas.shivangyadav.com`.
+    3.  Ingress route is created pointing `palmonas.shivangyadav.com` -> `svc/store-palmonas` on port 80.
+*   **Live Example:** [https://palmonas.shivangyadav.com/](https://palmonas.shivangyadav.com/)
+
+#### ⚡ MedusaJS: Direct NodePort Access
+Medusa's Admin Dashboard has strict CORS and domain configurations that can be tricky behind standard Ingress in this specific environment ("Blocking Custom Domains").
+*   **Challenge:** The Medusa Admin often blocks connections if the Host header doesn't strictly match internal expectations, causing "Network Errors" on custom domains.
+*   **Solution:** To ensure reliable access, we expose the Medusa Admin via **NodePort**.
+*   **Flow:**
+    1.  Kubernetes assigns a random high port (e.g., `32165`) on the EC2 host.
+    2.  The ShopFlow Dashboard retrieves this port dynamically.
+    3.  User is redirected to `http://43.205.194.216:32165/app/login`.
+
+### 4. Resource Management (The Secret Sauce)
+To ensure stability on a 2GB RAM node, strict limits are enforced via Helm Values (`values-prod.yaml`):
+
+*   **ResourceQuotas (Per Namespace):**
+    *   **RAM:** Max 1.5Gi
+    *   **CPU:** Max 1.5 core
+    *   **Storage:** Max 5Gi
+*   **LimitRange:**
+    *   Prevents any pod from launching without limits (defaults to 512Mi RAM).
+*   **Graceful Recovery:**
+    *   A **Reconciliation Service** runs on API startup to detect and fix any stores stuck in `PROVISIONING` state due to restarts.
 
 ---
 
-## 📂 Source Code Structure
-
-- **`apps/web`**: Next.js 14 Dashboard (Frontend).
-- **`apps/api`**: Express.js Control Plane (Backend).
-  - `src/services/k8s.service.ts`: Core logic for Helm/K8s orchestration.
-  - `src/controllers/store.controller.ts`: Store management logic.
-  - `helm/`: Helm charts for store blueprints.
-- **`k8s/`**: Kubernetes manifests for the platform itself.
-
----
-
-## ☸️ Helm Charts
-
-Located in `apps/api/helm/`:
-
-### **WooCommerce Chart**
-- **WordPress Container**: PHP-FPM + Apache.
-- **MariaDB Container**: Persistent database.
-- **Values**:
-  - `values-local.yaml`: Disables heavy probes, uses minimal resources.
-  - `values-prod.yaml`: Enable readiness probes, higher resource limits.
-
-### **Medusa Chart**
-- **Medusa Server**: Node.js backend.
-- **Postgres**: Main database.
-- **Redis**: Event bus / cache.
-- **Worker**: Background job processor.
-
----
-
-## 🛡️ Security & Scalability
-
-- **RBAC**: API runs with a restricted ServiceAccount.
-- **Rate Limiting**: 20 req/min per user, 5 req/min for create operations.
-- **Network Policies**: Stores are isolated in their own namespaces.
-- **Horizontal Scaling**: API is stateless and can be scaled (HPA).
+### Created by Shivang Yadav

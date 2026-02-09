@@ -57,6 +57,16 @@ export default function Home() {
     fetchStores(false);
   };
 
+  const handleRetry = async (id: string) => {
+    try {
+      await storeApi.retry(id);
+      toast.success("Retry initiated successfully");
+      fetchStores(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to retry provisioning");
+    }
+  };
+
   useEffect(() => {
     fetchStores();
   }, []);
