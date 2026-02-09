@@ -17,7 +17,7 @@ wordpress:
       cpu: "300m"
   
   service:
-    type: NodePort
+    type: ClusterIP
     port: 80
   
   securityContext:
@@ -65,16 +65,15 @@ mariadb:
     enabled: false
 
 ingress:
-  enabled: false
-  className: "nginx"
+  enabled: true
+  className: "traefik"
   host: "store.local.test"
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
   tls:
-    enabled: false
+    enabled: true
+    secretName: "woocommerce-tls"
 
 resourceQuota:
   enabled: false

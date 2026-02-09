@@ -497,12 +497,17 @@ class K8sService {
     
     const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
+      --set ingress.enabled=true \
       --set ingress.host=${domain} \
+      --set ingress.tls.enabled=true \
+      --set ingress.tls.secretName=${sanitizedReleaseName}-tls \
+      --set wordpress.service.type=ClusterIP \
       --set mariadb.auth.password=${dbPass} \
       --set mariadb.auth.rootPassword=${dbRootPass} \
       --set wordpress.adminPassword=${wpPass} \
       --set wordpress.storeTitle="${title}" \
       --values "${chartPath}/values-local.yaml"`;
+
 
     logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (WooCommerce)... [NO WAIT - async deployment]`);
 
@@ -547,7 +552,12 @@ class K8sService {
 
     let command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
-      --set ingress.host=${domain}`;
+      --set ingress.enabled=true \
+      --set ingress.host=${domain} \
+      --set ingress.tls.enabled=true \
+      --set ingress.tls.secretName=${sanitizedReleaseName}-tls \
+      --set medusa.service.type=ClusterIP`;
+
     
     if (dbPassword) {
       command += ` \\\n      --set postgresql.auth.password="${dbPassword}"`;

@@ -16,9 +16,8 @@ medusa:
       cpu: "800m"
   
   service:
-    type: NodePort
+    type: ClusterIP
     port: 9000
-    nodePort: null
   
   env:
     NODE_ENV: "development"
@@ -140,15 +139,14 @@ redis:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: "traefik"
   host: "medusa.local.test"
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
   tls:
-    enabled: false
+    enabled: true
+    secretName: "medusa-tls"
 
 resourceQuota:
   enabled: true

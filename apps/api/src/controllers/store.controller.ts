@@ -73,10 +73,9 @@ export const createStore = async (req: Request, res: Response) => {
       });
     }
 
-    const baseDomain = process.env.BASE_DOMAIN || "local.test";
-    const ingressPort = process.env.INGRESS_HTTP_PORT || "";
-    const subdomain = sanitizedName + `.${baseDomain}`;
-    const fullUrl = ingressPort ? `http://${subdomain}:${ingressPort}` : `http://${subdomain}`;
+    const subdomain = `${sanitizedName}.shivangyadav.com`;
+    const fullUrl = `https://${subdomain}`;
+
 
     const existingStore = await prisma.store.findUnique({
       where: { subdomain },
@@ -129,7 +128,7 @@ export const createStore = async (req: Request, res: Response) => {
           await k8sService.installWooCommerce(
             sanitizedName,
             namespace,
-            sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
+            sanitizedName + `.shivangyadav.com`,
             dbPassword,
             dbRootPassword,
             wpAdminPassword,
@@ -139,7 +138,7 @@ export const createStore = async (req: Request, res: Response) => {
           await k8sService.installMedusa(
             sanitizedName,
             namespace,
-            sanitizedName + `.${process.env.BASE_DOMAIN || "local.test"}`,
+            sanitizedName + `.shivangyadav.com`,
             dbPassword,
             wpAdminPassword,
             adminEmail
@@ -187,27 +186,11 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
-        logger.info(`[${store.id}] Fetching NodePort for ${sanitizedName} in namespace ${namespace}...`);
-        const nodePort = await k8sService.getStoreNodePort(sanitizedName, namespace, type);
-        logger.info(`[${store.id}] NodePort retrieved: ${nodePort}`);
-        
-        const publicIP = process.env.PUBLIC_IP || "localhost";
-        const publicDomain = process.env.PUBLIC_DOMAIN || "localhost";
-        // For Medusa, add /app/login to the URL
-        let storeUrl = nodePort ? `http://${publicDomain}:${nodePort}` : fullUrl;
-        if (type === "MEDUSA" && nodePort) {
-          storeUrl = `http://${publicIP}:${nodePort}/app/login`;
-        }
+        // Store URL is now the subdomain with HTTPS
+        const storeUrl = type === "MEDUSA" 
+          ? `https://${sanitizedName}.shivangyadav.com/app/login`
+          : `https://${sanitizedName}.shivangyadav.com`;
 
-        // Update WordPress site URL to the actual NodePort URL
-        if (nodePort && type === "WOOCOMMERCE") {
-          try {
-            await k8sService.updateWordPressSiteUrl(namespace, sanitizedName, `http://${publicIP}:${nodePort}`);
-          } catch (urlUpdateError) {
-            logger.warn(`Failed to auto-update WordPress URL, user will need to do it manually:`, urlUpdateError);
-            // Don't fail the whole provisioning just because URL update failed
-          }
-        }
 
         await prisma.store.update({
           where: { id: store.id },
