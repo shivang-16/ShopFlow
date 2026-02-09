@@ -39,6 +39,10 @@ spec:
         - name: DANGEROUSLY_DISABLE_HOST_CHECK
           value: {{ .Values.medusa.env.DANGEROUSLY_DISABLE_HOST_CHECK | quote }}
         {{- end }}
+        {{- if .Values.medusa.env.MEDUSA_ADMIN_BACKEND_URL }}
+        - name: MEDUSA_ADMIN_BACKEND_URL
+          value: {{ .Values.medusa.env.MEDUSA_ADMIN_BACKEND_URL | quote }}
+        {{- end }}
         - name: MEDUSA_ADMIN_ONBOARDING_TYPE
           value: "default"
         - name: MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY
