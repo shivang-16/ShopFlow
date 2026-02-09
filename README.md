@@ -4,7 +4,7 @@ ShopFlow is a robust, Kubernetes-native platform that enables users to instantly
 
 Start your own store in seconds, with dedicated resources, automated setup, and production-grade reliability.
 
-**Live Demo:** [https://shop-flow-web-olive.vercel.app/](https://shop-flow-web-olive.vercel.app/)
+**Live:** [https://shop-flow-web-olive.vercel.app/](https://shop-flow-web-olive.vercel.app/)
 
 ### 🚀 Sample Stores (Running Live on K3s)
 *   **WooCommerce Store:** [https://palmonas.shivangyadav.com/](https://palmonas.shivangyadav.com/)
@@ -12,6 +12,8 @@ Start your own store in seconds, with dedicated resources, automated setup, and 
 *   **Medusa Admin Dashboard:** [http://43.205.194.216:32165/app/login](http://43.205.194.216:32165/app/login)
     *   **Email:** `admin@medusa.local`
     *   **Password:** `phWq9GDIEukFP1N5`
+
+<img width="1707" height="881" alt="Screenshot 2026-02-09 at 5 37 35 PM" src="https://github.com/user-attachments/assets/b2c94f8f-50a7-48ae-a54f-6f8c75685ec1" />
 
 ---
 
