@@ -552,6 +552,7 @@ class K8sService {
 
     let command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
+      --timeout 10m0s \
       --set ingress.enabled=false \
       --set medusa.service.type=NodePort`;
 
