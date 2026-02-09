@@ -152,7 +152,17 @@ resourceQuota:
     requests.memory: "2Gi"
     limits.cpu: "2"
     limits.memory: "4Gi"
-    persistentvolumeclaims: "5"
+    requests.storage: "15Gi"
+    persistentvolumeclaims: "3"
+
+limitRange:
+  enabled: true
+  default:
+    cpu: "800m"
+    memory: "1Gi"
+  defaultRequest:
+    cpu: "200m"
+    memory: "512Mi"
 
 networkPolicy:
   enabled: false

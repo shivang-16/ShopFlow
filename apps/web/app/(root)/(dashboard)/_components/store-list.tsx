@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Store as StoreIcon, Loader2, XCircle, Trash2, ExternalLink, KeyRound, Copy, Check } from "lucide-react";
+import { CheckCircle2, Store as StoreIcon, Loader2, XCircle, Trash2, ExternalLink, KeyRound, Copy, Check, RotateCw } from "lucide-react";
 import { Store } from "../../../../lib/api/stores";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -10,6 +10,7 @@ interface StoreListProps {
   stores: Store[];
   loading: boolean;
   onDelete?: (id: string) => void;
+  onRetry?: (id: string) => void;
 }
 
 function getStatusBadge(status: Store["status"]) {
@@ -38,11 +39,12 @@ function getStatusBadge(status: Store["status"]) {
   }
 }
 
-export function StoreList({ stores, loading, onDelete }: StoreListProps) {
+export function StoreList({ stores, loading, onDelete, onRetry }: StoreListProps) {
   const [showCredentials, setShowCredentials] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
@@ -66,6 +68,23 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
     // But if parent does router.refresh(), component might remount?
     // Let's clear it on error only? Or check if still in list?
     // Keep it simple: leave it true on success until component unmounts or updates.
+  };
+
+  const handleRetry = async (id: string) => {
+    setRetryingId(id);
+    const toastId = toast.loading("Restarting provisioning...");
+    
+    try {
+      if (onRetry) {
+        await onRetry(id);
+        toast.success("Retry started successfully", { id: toastId });
+      }
+    } catch (error) {
+       const message = error instanceof Error ? error.message : "Failed to retry provisioning";
+       toast.error(message, { id: toastId });
+    } finally {
+      setRetryingId(null);
+    }
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -179,6 +198,22 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
                           <KeyRound className="w-4 h-4" />
                         </button>
                       )}
+                      
+                      {store.status === "FAILED" && (
+                        <button
+                          onClick={() => handleRetry(store.id)}
+                          className="text-orange-500 hover:text-orange-700 transition-colors p-2 hover:bg-orange-50 rounded-lg disabled:opacity-50"
+                          title="Retry provisioning"
+                          disabled={retryingId === store.id}
+                        >
+                          {retryingId === store.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RotateCw className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleDelete(store.id, store.name)}
                         className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"

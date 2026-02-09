@@ -117,156 +117,205 @@ export const createStore = async (req: Request, res: Response) => {
 
     res.status(202).json(store);
 
-    (async () => {
-      const startTime = Date.now();
-      try {
-        const namespace = `store-${store.id}`;
+    provisionStoreBackground(store, name);
 
-        await k8sService.createNamespace(namespace);
-
-        if (type === "WOOCOMMERCE") {
-          await k8sService.installWooCommerce(
-            sanitizedName,
-            namespace,
-            sanitizedName + `.shivangyadav.com`,
-            dbPassword,
-            dbRootPassword,
-            wpAdminPassword,
-            name
-          );
-        } else if (type === "MEDUSA") {
-          await k8sService.installMedusa(
-            sanitizedName,
-            namespace,
-            sanitizedName + `.shivangyadav.com`,
-            dbPassword,
-            wpAdminPassword,
-            adminEmail
-          );
-          
-          // Wait a bit for resources to be created
-          logger.info(`[${store.id}] Waiting 5s for Kubernetes resources to be created...`);
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
-          // Verify resources were created
-          const resourceCheck = await k8sService.verifyNamespaceResources(namespace);
-          logger.info(`[${store.id}] Resource check:`, resourceCheck);
-        } else {
-          throw new Error(`Unsupported store type: ${type}`);
-        }
-
-        let attempts = 0;
-        const maxAttempts = 60;
-        let storeReady = false;
-
-        logger.info(`[${store.id}] Starting to monitor deployment status...`);
-
-        while (attempts < maxAttempts && !storeReady) {
-          attempts++;
-          const status = await k8sService.getStoreStatus(namespace);
-
-          logger.info(`[${store.id}] Attempt ${attempts}/${maxAttempts} - Status: ${status.status}, Message: ${status.message}`);
-
-          if (status.status === "READY") {
-            storeReady = true;
-            logger.info(`[${store.id}] Deployment is READY! Getting NodePort...`);
-            break;
-          } else if (status.status === "FAILED") {
-            throw new Error(`Store provisioning failed: ${status.message}`);
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-
-          if (Date.now() - startTime > PROVISIONING_TIMEOUT) {
-            throw new Error("Provisioning timeout exceeded");
-          }
-        }
-
-        if (!storeReady) {
-          throw new Error("Store did not become ready in time");
-        }
-
-        let storeUrl: string;
-
-        if (type === "MEDUSA") {
-          try {
-            const nodePort = await k8sService.getNodePort(namespace, sanitizedName);
-            const publicIP = process.env.PUBLIC_IP || "43.205.194.216";
-            storeUrl = `http://${publicIP}:${nodePort}/app/login`;
-          } catch (err) {
-            logger.error(`[${store.id}] Failed to get NodePort for Medusa store:`, err);
-            // Fallback or throw?
-            throw new Error("Failed to retrieve service port for Medusa store");
-          }
-        } else {
-          storeUrl = `https://${sanitizedName}.shivangyadav.com`;
-        }
-
-        // Update WordPress site URL to use the subdomain
-        if (type === "WOOCOMMERCE") {
-          try {
-            await k8sService.updateWordPressSiteUrl(
-              namespace, 
-              sanitizedName, 
-              `https://${sanitizedName}.shivangyadav.com`
-            );
-            logger.info(`[${store.id}] WordPress URL updated to https://${sanitizedName}.shivangyadav.com`);
-          } catch (urlUpdateError) {
-            logger.warn(`[${store.id}] Failed to auto-update WordPress URL:`, urlUpdateError);
-            // Don't fail the whole provisioning just because URL update failed
-          }
-        }
-
-
-        await prisma.store.update({
-          where: { id: store.id },
-          data: { 
-            status: "READY",
-            subdomain: storeUrl 
-          },
-        });
-
-        logger.info(`Store ${store.id} provisioned successfully - URL: ${storeUrl}`);
-
-        await auditService.log({
-          action: "STORE_PROVISIONED",
-          entityId: store.id,
-          entity: "Store",
-          userId,
-          metadata: {
-            duration: Date.now() - startTime,
-            namespace,
-          },
-        });
-
-        logger.info(`Store ${store.id} provisioned successfully in ${Date.now() - startTime}ms`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        logger.error(`Failed to provision store ${store.id}:`, errorMessage);
-        
-        await prisma.store.update({
-          where: { id: store.id },
-          data: { 
-            status: "FAILED",
-            errorMessage: errorMessage.substring(0, 500)
-          },
-        });
-
-        await auditService.log({
-          action: "STORE_PROVISION_FAILED",
-          entityId: store.id,
-          entity: "Store",
-          userId,
-          metadata: {
-            error: errorMessage,
-            duration: Date.now() - startTime,
-          },
-        });
-      }
-    })();
   } catch (error) {
     logger.error("Create store API error", error);
     res.status(500).json({ error: "Failed to create store" });
+  }
+};
+
+export const retryProvision = async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const store = await prisma.store.findUnique({ where: { id } });
+    
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
+    }
+
+    if (store.userId && store.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (store.status !== "FAILED") {
+      return res.status(400).json({ error: "Only failed stores can be retried" });
+    }
+
+    // Reset status to PROVISIONING
+    await prisma.store.update({
+      where: { id },
+      data: { 
+        status: "PROVISIONING",
+        errorMessage: null,
+      }
+    });
+
+    res.json({ message: "Store provisioning retry started", storeId: id });
+
+    provisionStoreBackground(store, req.body.name || store.name); 
+
+  } catch (error) {
+    logger.error("Retry provision API error", error);
+    res.status(500).json({ error: "Failed to retry provisioning" });
+  }
+};
+
+const provisionStoreBackground = async (store: any, originalName: string) => {
+  const startTime = Date.now();
+  const userId = store.userId;
+  const sanitizedName = store.name;
+  const type = store.type;
+  
+  try {
+    const namespace = `store-${store.id}`;
+
+    await k8sService.createNamespace(namespace);
+
+    if (type === "WOOCOMMERCE") {
+      await k8sService.installWooCommerce(
+        sanitizedName,
+        namespace,
+        sanitizedName + `.shivangyadav.com`,
+        store.dbPassword,
+        store.dbRootPassword || k8sService.generateSecurePassword(20),
+        store.wpAdminPassword,
+        originalName
+      );
+    } else if (type === "MEDUSA") {
+      await k8sService.installMedusa(
+        sanitizedName,
+        namespace,
+        sanitizedName + `.shivangyadav.com`,
+        store.dbPassword,
+        store.wpAdminPassword,
+        store.adminEmail
+      );
+      
+      // Wait a bit for resources to be created
+      logger.info(`[${store.id}] Waiting 5s for Kubernetes resources to be created...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      // Verify resources were created
+      const resourceCheck = await k8sService.verifyNamespaceResources(namespace);
+      logger.info(`[${store.id}] Resource check:`, resourceCheck);
+    } else {
+      throw new Error(`Unsupported store type: ${type}`);
+    }
+
+    let attempts = 0;
+    const maxAttempts = 60;
+    let storeReady = false;
+
+    logger.info(`[${store.id}] Starting to monitor deployment status...`);
+
+    while (attempts < maxAttempts && !storeReady) {
+      attempts++;
+      const status = await k8sService.getStoreStatus(namespace);
+
+      logger.info(`[${store.id}] Attempt ${attempts}/${maxAttempts} - Status: ${status.status}, Message: ${status.message}`);
+
+      if (status.status === "READY") {
+        storeReady = true;
+        logger.info(`[${store.id}] Deployment is READY! Getting NodePort...`);
+        break;
+      } else if (status.status === "FAILED") {
+        throw new Error(`Store provisioning failed: ${status.message}`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      if (Date.now() - startTime > PROVISIONING_TIMEOUT * 2) {
+        throw new Error("Provisioning timeout exceeded");
+      }
+    }
+
+    if (!storeReady) {
+      throw new Error("Store did not become ready in time");
+    }
+
+    let storeUrl: string;
+
+    if (type === "MEDUSA") {
+      try {
+        const nodePort = await k8sService.getNodePort(namespace, sanitizedName);
+        const publicIP = process.env.PUBLIC_IP || "43.205.194.216";
+        storeUrl = `http://${publicIP}:${nodePort}/app/login`;
+      } catch (err) {
+        logger.error(`[${store.id}] Failed to get NodePort for Medusa store:`, err);
+        // Fallback or throw?
+        throw new Error("Failed to retrieve service port for Medusa store");
+      }
+    } else {
+      storeUrl = `https://${sanitizedName}.shivangyadav.com`;
+    }
+
+    // Update WordPress site URL to use the subdomain
+    if (type === "WOOCOMMERCE") {
+      try {
+        await k8sService.updateWordPressSiteUrl(
+          namespace, 
+          sanitizedName, 
+          `https://${sanitizedName}.shivangyadav.com`
+        );
+        logger.info(`[${store.id}] WordPress URL updated to https://${sanitizedName}.shivangyadav.com`);
+      } catch (urlUpdateError) {
+        logger.warn(`[${store.id}] Failed to auto-update WordPress URL:`, urlUpdateError);
+        // Don't fail the whole provisioning just because URL update failed
+      }
+    }
+
+
+    await prisma.store.update({
+      where: { id: store.id },
+      data: { 
+        status: "READY",
+        subdomain: storeUrl 
+      },
+    });
+
+    logger.info(`Store ${store.id} provisioned successfully - URL: ${storeUrl}`);
+
+    await auditService.log({
+      action: "STORE_PROVISIONED",
+      entityId: store.id,
+      entity: "Store",
+      userId,
+      metadata: {
+        duration: Date.now() - startTime,
+        namespace,
+      },
+    });
+
+    logger.info(`Store ${store.id} provisioned successfully in ${Date.now() - startTime}ms`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error(`Failed to provision store ${store.id}:`, errorMessage);
+    
+    await prisma.store.update({
+      where: { id: store.id },
+      data: { 
+        status: "FAILED",
+        errorMessage: errorMessage.substring(0, 500)
+      },
+    });
+
+    await auditService.log({
+      action: "STORE_PROVISION_FAILED",
+      entityId: store.id,
+      entity: "Store",
+      userId,
+      metadata: {
+        error: errorMessage,
+        duration: Date.now() - startTime,
+      },
+    });
   }
 };
 

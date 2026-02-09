@@ -156,7 +156,12 @@ export default function Home() {
            </div>
            
            <div className="p-0">
-             <StoreList stores={stores} loading={loading} onDelete={handleDelete} />
+             <StoreList 
+               stores={stores} 
+               loading={loading} 
+               onDelete={handleDelete}
+               onRetry={handleRetry}
+             />
            </div>
         </div>
       </main>

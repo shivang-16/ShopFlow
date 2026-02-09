@@ -98,6 +98,11 @@ export const storeApi = {
     if (!res.ok) throw new Error(res.error || "Failed to delete store");
   },
 
+  retry: async (id: string): Promise<void> => {
+    const res = await apiPost(`/api/stores/${id}/retry`, {});
+    if (!res.ok) throw new Error(res.error || "Failed to retry provisioning");
+  },
+
   getMetrics: async (): Promise<Metrics> => {
     const res = await apiGet("/api/metrics");
     if (!res.ok) throw new Error(res.error || "Failed to fetch metrics");

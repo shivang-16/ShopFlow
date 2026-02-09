@@ -12,8 +12,15 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info("Database connected successfully");
     
-    server.listen(PORT, () => {
+    server.listen(PORT, async () => {
       logger.info(`Server running on port ${PORT}`);
+      // Start background reconciliation
+      try {
+        const { reconciliationService } = await import("./services/reconciliation.service");
+        await reconciliationService.reconcileProvisioningStores();
+      } catch (err) {
+        logger.error("Failed to run reconciler:", err);
+      }
     });
   } catch (error) {
     logger.error("Failed to connect to database", error);

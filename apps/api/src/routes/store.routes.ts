@@ -8,6 +8,7 @@ import {
   getStoreAuditLogs,
   deleteStore,
   getMetrics,
+  retryProvision,
 } from "../controllers/store.controller";
 import { checkAuth } from "../middlewares/auth.middleware";
 import { strictLimiter } from "../middlewares/rate-limit.middleware";
@@ -18,6 +19,7 @@ router.use(checkAuth);
 
 // Stricter rate limits for create/delete operations (5 req/min)
 router.post("/stores", strictLimiter, createStore);
+router.post("/stores/:id/retry", strictLimiter, retryProvision);
 router.delete("/stores/:id", strictLimiter, deleteStore);
 
 // Normal rate limits for read operations (20 req/min via app-level middleware)
