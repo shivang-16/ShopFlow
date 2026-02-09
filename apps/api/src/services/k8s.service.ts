@@ -553,6 +553,7 @@ class K8sService {
     let command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
       --set ingress.enabled=true \
+      --set ingress.className=traefik \
       --set ingress.host=${domain} \
       --set ingress.tls.enabled=true \
       --set ingress.tls.secretName=${sanitizedReleaseName}-tls \

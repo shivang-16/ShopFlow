@@ -24,6 +24,7 @@ medusa:
     ADMIN_CORS: "*"
     STORE_CORS: "*"
     DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+    MEDUSA_ADMIN_BACKEND_URL: "https://{{ .Values.ingress.host }}"
   
   readinessProbe:
     enabled: true

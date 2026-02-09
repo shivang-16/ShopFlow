@@ -191,6 +191,21 @@ export const createStore = async (req: Request, res: Response) => {
           ? `https://${sanitizedName}.shivangyadav.com/app/login`
           : `https://${sanitizedName}.shivangyadav.com`;
 
+        // Update WordPress site URL to use the subdomain
+        if (type === "WOOCOMMERCE") {
+          try {
+            await k8sService.updateWordPressSiteUrl(
+              namespace, 
+              sanitizedName, 
+              `https://${sanitizedName}.shivangyadav.com`
+            );
+            logger.info(`[${store.id}] WordPress URL updated to https://${sanitizedName}.shivangyadav.com`);
+          } catch (urlUpdateError) {
+            logger.warn(`[${store.id}] Failed to auto-update WordPress URL:`, urlUpdateError);
+            // Don't fail the whole provisioning just because URL update failed
+          }
+        }
+
 
         await prisma.store.update({
           where: { id: store.id },
