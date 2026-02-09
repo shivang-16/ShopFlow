@@ -55,7 +55,14 @@ export class ReconciliationService {
         let storeUrl = store.subdomain;
         if (store.type === "MEDUSA" && (!storeUrl || !storeUrl.includes(":"))) {
            try {
-             const nodePort = await k8sService.getNodePort(namespace, store.name);
+             // Sanitize store name to match Helm release name
+             const releaseName = store.name
+               .toLowerCase()
+               .replace(/[^a-z0-9-]/g, '-')
+               .replace(/-+/g, '-')
+               .replace(/^-|-$/g, '');
+             
+             const nodePort = await k8sService.getNodePort(namespace, releaseName);
              const publicIP = process.env.PUBLIC_IP || "43.205.194.216"; // Fallback IP
              storeUrl = `http://${publicIP}:${nodePort}/app/login`;
            } catch (e) {

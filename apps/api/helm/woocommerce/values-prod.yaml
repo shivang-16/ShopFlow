@@ -114,7 +114,7 @@ resourceQuota:
   hard:
     requests.cpu: "500m"
     requests.memory: "1.2Gi"
-    limits.cpu: "2"
+    limits.cpu: "4"
     limits.memory: "4Gi"
     persistentvolumeclaims: "5"
 
