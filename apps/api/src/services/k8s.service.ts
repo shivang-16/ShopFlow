@@ -110,7 +110,12 @@ class K8sService {
   }
 
   generateSecurePassword(length: number = 16): string {
-    return crypto.randomBytes(length).toString('base64').slice(0, length);
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let ret = "";
+    for (let i = 0; i < length; ++i) {
+      ret += charset.charAt(crypto.randomInt(0, charset.length));
+    }
+    return ret;
   }
 
   async createSecret(namespace: string, secretName: string, data: Record<string, string>) {
