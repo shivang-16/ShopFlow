@@ -156,7 +156,7 @@ resourceQuota:
   enabled: true
   hard:
     requests.cpu: "500m"
-    requests.memory: "1Gi"
+    requests.memory: "1.3Gi"
     limits.cpu: "1.5"
     limits.memory: "1.7Gi"
     requests.storage: "5Gi"
