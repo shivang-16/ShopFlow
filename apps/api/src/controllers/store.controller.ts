@@ -186,10 +186,21 @@ export const createStore = async (req: Request, res: Response) => {
           throw new Error("Store did not become ready in time");
         }
 
-        // Store URL is now the subdomain with HTTPS
-        const storeUrl = type === "MEDUSA" 
-          ? `https://${sanitizedName}.shivangyadav.com/app/login`
-          : `https://${sanitizedName}.shivangyadav.com`;
+        let storeUrl: string;
+
+        if (type === "MEDUSA") {
+          try {
+            const nodePort = await k8sService.getNodePort(namespace, sanitizedName);
+            const publicIP = process.env.PUBLIC_IP || "43.205.194.216";
+            storeUrl = `http://${publicIP}:${nodePort}/app/login`;
+          } catch (err) {
+            logger.error(`[${store.id}] Failed to get NodePort for Medusa store:`, err);
+            // Fallback or throw?
+            throw new Error("Failed to retrieve service port for Medusa store");
+          }
+        } else {
+          storeUrl = `https://${sanitizedName}.shivangyadav.com`;
+        }
 
         // Update WordPress site URL to use the subdomain
         if (type === "WOOCOMMERCE") {

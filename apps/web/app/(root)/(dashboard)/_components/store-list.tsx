@@ -42,18 +42,30 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
   const [showCredentials, setShowCredentials] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
       return;
     }
 
-    toast.loading("Deleting store...");
+    setDeletingId(id);
+    const toastId = toast.loading("Deleting store...");
+    
     try {
-      onDelete?.(id);
+      await onDelete?.(id);
+      toast.dismiss(toastId);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete store";
-      toast.error(message);
+      toast.error(message, { id: toastId });
+      setDeletingId(null);
     }
+    // Don't clear deletingId on success immediately to show feedback until removed from list
+    // Or clear it? If parent re-fetches, it might be fine.
+    // Ideally parent removes it from list.
+    // But if parent does router.refresh(), component might remount?
+    // Let's clear it on error only? Or check if still in list?
+    // Keep it simple: leave it true on success until component unmounts or updates.
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -169,10 +181,15 @@ export function StoreList({ stores, loading, onDelete }: StoreListProps) {
                       )}
                       <button
                         onClick={() => handleDelete(store.id, store.name)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                        className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete store"
+                        disabled={deletingId === store.id}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deletingId === store.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>

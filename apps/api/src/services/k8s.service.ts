@@ -552,12 +552,8 @@ class K8sService {
 
     let command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
-      --set ingress.enabled=true \
-      --set ingress.className=traefik \
-      --set ingress.host=${domain} \
-      --set ingress.tls.enabled=true \
-      --set ingress.tls.secretName=${sanitizedReleaseName}-tls \
-      --set medusa.service.type=ClusterIP`;
+      --set ingress.enabled=false \
+      --set medusa.service.type=NodePort`;
 
     
     if (dbPassword) {
@@ -593,6 +589,24 @@ class K8sService {
     } catch (error: any) {
       logger.error(`❌ Helm install FAILED for ${sanitizedReleaseName}:`, error.message);
       logger.error(`Full error:`, error);
+      throw error;
+    }
+  }
+
+  async getNodePort(namespace: string, releaseName: string): Promise<number> {
+    try {
+      const k8sApi = this.k8sConfig.makeApiClient(CoreV1Api);
+      const serviceName = `${releaseName}-medusa`;
+      const res = await k8sApi.readNamespacedService({ name: serviceName, namespace });
+      const nodePort = res.spec?.ports?.[0]?.nodePort;
+      
+      if (!nodePort) {
+        throw new Error(`NodePort not found for service ${serviceName}`);
+      }
+      
+      return nodePort;
+    } catch (error: any) {
+      logger.error(`Failed to get NodePort for ${releaseName}:`, error);
       throw error;
     }
   }

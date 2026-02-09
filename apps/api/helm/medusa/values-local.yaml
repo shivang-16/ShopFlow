@@ -16,15 +16,15 @@ medusa:
       cpu: "800m"
   
   service:
-    type: ClusterIP
+    type: NodePort
     port: 9000
+    # nodePort: 32000 
   
   env:
     NODE_ENV: "development"
     ADMIN_CORS: "*"
     STORE_CORS: "*"
     DANGEROUSLY_DISABLE_HOST_CHECK: "true"
-    MEDUSA_ADMIN_BACKEND_URL: "https://{{ .Values.ingress.host }}"
   
   readinessProbe:
     enabled: true
@@ -139,7 +139,7 @@ redis:
     failureThreshold: 3
 
 ingress:
-  enabled: true
+  enabled: false
   className: "traefik"
   host: "medusa.local.test"
   annotations:

@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Search, Bell, ChevronDown, Home as HomeIcon, Package } from "lucide-react";
+import { Search, Bell, ChevronDown, Home as HomeIcon, Package, LogOut } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
 
 export function TopNav() {
   return (
@@ -36,10 +37,12 @@ export function TopNav() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-[#72D5C1] rounded-full border-2 border-white" />
         </button>
 
-        <button className="h-10 px-4 flex items-center gap-2 bg-[#72D5C1] rounded-xl hover:bg-[#5fc9b3] transition-all shadow-lg shadow-[#72D5C1]/20 group capitalize font-bold text-sm tracking-normal">
-          <span className="text-white">Export</span>
-          <ChevronDown className="w-4 h-4 text-white group-hover:translate-y-0.5 transition-transform" />
-        </button>
+        <SignOutButton>
+          <button className="h-10 px-4 flex items-center gap-2 bg-[#72D5C1] rounded-xl hover:bg-[#5fc9b3] transition-all shadow-lg shadow-[#72D5C1]/20 group capitalize font-bold text-sm tracking-normal">
+            <span className="text-white">Logout</span>
+            <LogOut className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </SignOutButton>
       </div>
     </header>
   );
