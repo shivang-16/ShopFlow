@@ -12,8 +12,8 @@ medusa:
       memory: "750Mi"
       cpu: "200m"
     limits:
-      memory: "1Gi"
-      cpu: "500m"
+      memory: "2Gi"
+      cpu: "1000m"
   
   service:
     type: NodePort
@@ -25,6 +25,7 @@ medusa:
     ADMIN_CORS: "*"
     STORE_CORS: "*"
     DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+    NODE_OPTIONS: "--max-old-space-size=1024"
   
   readinessProbe:
     enabled: true
@@ -157,8 +158,8 @@ resourceQuota:
   hard:
     requests.cpu: "500m"
     requests.memory: "1.3Gi"
-    limits.cpu: "1.5"
-    limits.memory: "2Gi"
+    limits.cpu: "2.0"
+    limits.memory: "4Gi"
     requests.storage: "5Gi"
     persistentvolumeclaims: "3"
 
