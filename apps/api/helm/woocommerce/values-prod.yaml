@@ -1,18 +1,18 @@
 wordpress:
   image:
     repository: wordpress
-    tag: 6.4-php8.1-apache
+    tag: latest
     pullPolicy: IfNotPresent
   
   storeTitle: "My Store"
   
   resources:
     requests:
-      memory: "512Mi"
-      cpu: "250m"
+      memory: "256Mi"
+      cpu: "100m"
     limits:
-      memory: "1Gi"
-      cpu: "1000m"
+      memory: "512Mi"
+      cpu: "500m"
   
   service:
     type: ClusterIP
@@ -57,15 +57,15 @@ mariadb:
   
   resources:
     requests:
-      memory: "384Mi"
-      cpu: "200m"
+      memory: "256Mi"
+      cpu: "100m"
     limits:
-      memory: "768Mi"
-      cpu: "600m"
+      memory: "512Mi"
+      cpu: "500m"
   
   persistence:
     enabled: true
-    size: 10Gi
+    size: 2Gi
     storageClass: "local-path"
   
   securityContext:
@@ -100,15 +100,11 @@ mariadb:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: "traefik"
   host: "store.yourdomain.com"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
   tls:
     enabled: true
     secretName: "tls-store-cert"
@@ -116,11 +112,11 @@ ingress:
 resourceQuota:
   enabled: true
   hard:
-    requests.cpu: "1"
-    requests.memory: "2Gi"
-    limits.cpu: "2"
-    limits.memory: "4Gi"
-    persistentvolumeclaims: "10"
+    requests.cpu: "500m"
+    requests.memory: "1.2Gi"
+    limits.cpu: "1.5"
+    limits.memory: "1.5Gi"
+    persistentvolumeclaims: "5"
 
 networkPolicy:
   enabled: false

@@ -500,6 +500,9 @@ class K8sService {
 
     const title = storeTitle || sanitizedReleaseName;
     
+    const isProduction = process.env.NODE_ENV === 'production';
+    const valuesFile = isProduction ? 'values-prod.yaml' : 'values-local.yaml';
+
     const command = `helm upgrade --install "${sanitizedReleaseName}" "${chartPath}" \
       --namespace ${namespace} \
       --set ingress.enabled=true \
@@ -511,7 +514,7 @@ class K8sService {
       --set mariadb.auth.rootPassword=${dbRootPass} \
       --set wordpress.adminPassword=${wpPass} \
       --set wordpress.storeTitle="${title}" \
-      --values "${chartPath}/values-local.yaml"`;
+      --values "${chartPath}/${valuesFile}"`;
 
 
     logger.info(`Executing Helm: helm upgrade --install "${sanitizedReleaseName}" (WooCommerce)... [NO WAIT - async deployment]`);
